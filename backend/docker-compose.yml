@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: yellowpages-db
+    environment:
+      POSTGRES_DB: yellowpages
+      POSTGRES_USER: yellowpages
+      POSTGRES_PASSWORD: yellowpages
+    ports:
+      - "5432:5432"
+    volumes:
+      - yellowpages_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U yellowpages -d yellowpages"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  yellowpages_pgdata:

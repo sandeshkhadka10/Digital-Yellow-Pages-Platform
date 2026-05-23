@@ -11,7 +11,15 @@ SECRET_KEY = os.getenv("SECRET_KEY", "change-me-in-production-use-a-long-random-
 
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    if host.strip()
+]
+
+# Allow LAN access in local development unless explicitly disabled.
+if DEBUG and os.getenv("ALLOW_ALL_HOSTS_IN_DEBUG", "True") == "True":
+    ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",

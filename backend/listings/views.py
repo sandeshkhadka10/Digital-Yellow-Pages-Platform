@@ -16,6 +16,24 @@ class StandardPagination(PageNumberPagination):
     max_page_size = 100
 
 
+# ── Public feed ───────────────────────────────────────────────────────────────
+
+
+class PublicListingListView(APIView):
+    """
+    GET /api/listings/public/  — paginated list of all active listings (no auth required)
+    """
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        listings = BusinessListing.objects.filter(is_active=True)
+        paginator = StandardPagination()
+        page = paginator.paginate_queryset(listings, request)
+        serializer = BusinessListingSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
 def haversine_km(lat1, lon1, lat2, lon2):
     # Great-circle distance in kilometers.
     lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
@@ -28,17 +46,17 @@ def haversine_km(lat1, lon1, lat2, lon2):
 
 # ── Listing CRUD ──────────────────────────────────────────────────────────────
 
+
 class ListingListCreateView(APIView):
     """
     GET  /api/listings/          — list the authenticated user's own listings
     POST /api/listings/          — create a new business listing
     """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        listings = BusinessListing.objects.filter(
-            owner=request.user, is_active=True
-        )
+        listings = BusinessListing.objects.filter(owner=request.user, is_active=True)
         paginator = StandardPagination()
         page = paginator.paginate_queryset(listings, request)
         serializer = BusinessListingSerializer(page, many=True)
@@ -76,16 +94,23 @@ class ListingDetailView(APIView):
     def get(self, request, pk):
         listing = BusinessListing.objects.filter(pk=pk, is_active=True).first()
         if not listing:
-            return Response({"detail": "Listing not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Listing not found."}, status=status.HTTP_404_NOT_FOUND
+            )
         serializer = BusinessListingSerializer(listing)
         return Response(serializer.data)
 
     def put(self, request, pk):
         listing = self.get_object(pk, user=request.user)
         if listing is None:
-            return Response({"detail": "Listing not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Listing not found."}, status=status.HTTP_404_NOT_FOUND
+            )
         if listing == "forbidden":
-            return Response({"detail": "You do not own this listing."}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"detail": "You do not own this listing."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         serializer = BusinessListingSerializer(listing, data=request.data, partial=True)
         if not serializer.is_valid():
@@ -96,9 +121,14 @@ class ListingDetailView(APIView):
     def delete(self, request, pk):
         listing = self.get_object(pk, user=request.user)
         if listing is None:
-            return Response({"detail": "Listing not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Listing not found."}, status=status.HTTP_404_NOT_FOUND
+            )
         if listing == "forbidden":
-            return Response({"detail": "You do not own this listing."}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"detail": "You do not own this listing."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         listing.is_active = False
         listing.save(update_fields=["is_active"])
@@ -106,6 +136,7 @@ class ListingDetailView(APIView):
 
 
 # ── Search ────────────────────────────────────────────────────────────────────
+
 
 class SearchView(APIView):
     """
@@ -123,6 +154,7 @@ class SearchView(APIView):
     Full-text search uses Django ORM icontains which maps to SQLite LIKE.
     For production with PostgreSQL, swap to SearchVector/SearchQuery for FTS.
     """
+
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -159,7 +191,9 @@ class SearchView(APIView):
                 )
             if lat < -90 or lat > 90 or lng < -180 or lng > 180:
                 return Response(
-                    {"detail": "lat must be between -90 and 90, lng between -180 and 180."},
+                    {
+                        "detail": "lat must be between -90 and 90, lng between -180 and 180."
+                    },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             if radius_km <= 0:
@@ -179,8 +213,7 @@ class SearchView(APIView):
         # Keyword search across title + service detail
         if query:
             listings = listings.filter(
-                Q(business_title__icontains=query) |
-                Q(service_detail__icontains=query)
+                Q(business_title__icontains=query) | Q(service_detail__icontains=query)
             )
 
         # Location filters

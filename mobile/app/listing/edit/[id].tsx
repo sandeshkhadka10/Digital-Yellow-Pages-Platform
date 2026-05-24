@@ -7,6 +7,7 @@ import { ApiError, BusinessListing, CreateListingPayload, listingsApi } from '@/
 import { AppButton } from '@/components/ui/app-button';
 import { AppInput } from '@/components/ui/app-input';
 import { useAuth } from '@/context/auth-context';
+import { extractCoordinatesFromMapUrl } from '@/lib/map-url';
 
 interface FormState {
     business_title: string;
@@ -109,12 +110,13 @@ export default function EditListingScreen() {
             setIsLoading(false);
             return;
         }
+        const currentListingId = listingId;
 
         let isMounted = true;
 
         async function loadListing() {
             try {
-                const data = await listingsApi.getListing(listingId);
+                const data = await listingsApi.getListing(currentListingId);
                 if (!isMounted) return;
                 setListing(data);
                 setForm(toFormState(data));
@@ -150,12 +152,16 @@ export default function EditListingScreen() {
 
         setIsSubmitting(true);
         try {
+            const normalizedLocationUrl = form.location_url.trim();
+            const coordinates = extractCoordinatesFromMapUrl(normalizedLocationUrl);
             const payload: CreateListingPayload = {
                 business_title: form.business_title.trim(),
                 service_detail: form.service_detail.trim(),
                 phone_number: form.phone_number.trim(),
                 business_email: form.business_email.trim(),
-                location_url: form.location_url.trim(),
+                location_url: normalizedLocationUrl,
+                latitude: coordinates?.latitude,
+                longitude: coordinates?.longitude,
                 city: form.city.trim() || undefined,
                 region: form.region.trim() || undefined,
             };

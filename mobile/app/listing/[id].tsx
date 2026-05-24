@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 import { ApiError, BusinessListing, listingsApi } from '@/lib/api';
+import { useAuth } from '@/context/auth-context';
 
 function formatDate(value: string) {
     const date = new Date(value);
@@ -12,12 +13,20 @@ function formatDate(value: string) {
 }
 
 export default function ListingDetailScreen() {
+    const { user, isAuthenticated } = useAuth();
     const params = useLocalSearchParams<{ id?: string | string[] }>();
     const listingId = Array.isArray(params.id) ? params.id[0] : params.id;
 
     const [listing, setListing] = useState<BusinessListing | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [error, setError] = useState('');
+
+    const isOwner =
+        isAuthenticated &&
+        !!user?.email &&
+        !!listing?.owner_email &&
+        user.email.toLowerCase() === listing.owner_email.toLowerCase();
 
     useEffect(() => {
         if (!listingId) {
@@ -64,6 +73,36 @@ export default function ListingDetailScreen() {
     const emailBusiness = async () => {
         if (!listing) return;
         await Linking.openURL(`mailto:${listing.business_email}`);
+    };
+
+    const handleDelete = () => {
+        if (!listing || isDeleting) return;
+
+        Alert.alert(
+            'Delete listing?'
+            , 'This will remove your listing from public results.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setIsDeleting(true);
+                            await listingsApi.deleteListing(listing.id);
+                            Alert.alert('Listing deleted', 'Your listing has been removed.', [
+                                { text: 'OK', onPress: () => router.replace('/(tabs)' as never) },
+                            ]);
+                        } catch (err) {
+                            const message = err instanceof ApiError ? err.message : 'Unable to delete listing.';
+                            Alert.alert('Delete failed', message);
+                        } finally {
+                            setIsDeleting(false);
+                        }
+                    },
+                },
+            ],
+        );
     };
 
     return (
@@ -143,6 +182,28 @@ export default function ListingDetailScreen() {
                                 <Text className="text-sm font-semibold text-gray-600">Map</Text>
                             </Pressable>
                         </View>
+
+                        {isOwner ? (
+                            <View className="mt-3 flex-row gap-2">
+                                <Pressable
+                                    onPress={() => router.push({ pathname: '/listing/edit/[id]', params: { id: listing.id } })}
+                                    className="flex-1 flex-row items-center justify-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 py-3 active:bg-amber-100"
+                                >
+                                    <MaterialIcons name="edit" size={16} color="#b45309" />
+                                    <Text className="text-sm font-semibold text-amber-700">Edit</Text>
+                                </Pressable>
+                                <Pressable
+                                    onPress={handleDelete}
+                                    disabled={isDeleting}
+                                    className="flex-1 flex-row items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 py-3 active:bg-red-100"
+                                >
+                                    <MaterialIcons name="delete-outline" size={16} color="#dc2626" />
+                                    <Text className="text-sm font-semibold text-red-600">
+                                        {isDeleting ? 'Deleting...' : 'Delete'}
+                                    </Text>
+                                </Pressable>
+                            </View>
+                        ) : null}
 
                         <View className="mt-5 border-t border-gray-100 pt-4">
                             <Text className="text-xs uppercase tracking-wide text-gray-400">Listing metadata</Text>

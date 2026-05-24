@@ -88,26 +88,28 @@ export default function OtpVerifyScreen() {
             <View className="mb-6">
                 <AppButton title="Back" variant="ghost" size="sm" onPress={() => router.back()} />
             </View>
-            <View className="mb-10">
-                <Text className="text-3xl font-bold text-gray-900">Check your email</Text>
-                <Text className="mt-2 text-base text-gray-500">
-                    We sent a 6-digit code to <Text className="font-semibold text-gray-700">{maskedEmail}</Text>
-                </Text>
-            </View>
-            <View className="mb-6">
-                <OtpInput value={otp} onChange={(val) => { setOtp(val); setError(''); }} error={error} disabled={isVerifying} autoFocus />
-            </View>
-            <View className="mb-6 items-center">
-                {secondsLeft > 0 ? (
-                    <Text className="text-sm text-gray-500">Code expires in <Text className="font-semibold text-amber-500">{formatTime(secondsLeft)}</Text></Text>
-                ) : (
-                    <Text className="text-sm text-red-500">Code expired. Please request a new one.</Text>
-                )}
-            </View>
-            <AppButton title="Verify" onPress={() => handleVerify(otp)} isLoading={isVerifying} disabled={otp.length < 6} fullWidth size="lg" />
-            <View className="mt-6 flex-row items-center justify-center gap-1">
-                <Text className="text-base text-gray-500">Didn't receive the code?</Text>
-                <AppButton title={isResending ? 'Sending...' : 'Resend'} variant="ghost" size="sm" onPress={handleResend} disabled={isResending || isVerifying} />
+            <View className="flex-1 justify-center">
+                <View className="mb-10">
+                    <Text className="text-3xl font-bold text-gray-900">Check your email</Text>
+                    <Text className="mt-2 text-base text-gray-500">
+                        We sent a 6-digit code to <Text className="font-semibold text-gray-700">{maskedEmail}</Text>
+                    </Text>
+                </View>
+                <View className="mb-6">
+                    <OtpInput value={otp} onChange={(val) => { setOtp(val); setError(''); }} error={error} disabled={isVerifying} autoFocus />
+                </View>
+                <View className="mb-6 items-center">
+                    {secondsLeft > 0 ? (
+                        <Text className="text-sm text-gray-500">Code expires in <Text className="font-semibold text-amber-500">{formatTime(secondsLeft)}</Text></Text>
+                    ) : (
+                        <Text className="text-sm text-red-500">Code expired. Please request a new one.</Text>
+                    )}
+                </View>
+                <AppButton title="Verify" onPress={() => handleVerify(otp)} isLoading={isVerifying} disabled={otp.length < 6} fullWidth size="lg" />
+                <View className="mt-6 flex-row items-center justify-center gap-1">
+                    <Text className="text-base text-gray-500">Didn't receive the code?</Text>
+                    <AppButton title={isResending ? 'Sending...' : 'Resend'} variant="ghost" size="sm" onPress={handleResend} disabled={isResending || isVerifying} />
+                </View>
             </View>
         </Screen>
     );

@@ -46,6 +46,15 @@ const INITIAL_FORM: FormState = {
     region: '',
 };
 
+const ALLOWED_MAP_HOSTS = [
+    'maps.google.com',
+    'www.google.com',
+    'goo.gl',
+    'maps.apple.com',
+    'www.openstreetmap.org',
+    'osm.org',
+];
+
 function validate(form: FormState): FormErrors {
     const errors: FormErrors = {};
     if (!form.business_title.trim()) errors.business_title = 'Business title is required.';
@@ -53,11 +62,23 @@ function validate(form: FormState): FormErrors {
     if (!form.service_detail.trim()) errors.service_detail = 'Service description is required.';
     else if (form.service_detail.trim().length < 20) errors.service_detail = 'Must be at least 20 characters.';
     if (!form.phone_number.trim()) errors.phone_number = 'Phone number is required.';
-    else if (!/^\+?[\d\s\-]{7,20}$/.test(form.phone_number.trim())) errors.phone_number = 'Enter a valid phone number.';
+    else if (!/^\+[\d\s\-()]{7,25}$/.test(form.phone_number.trim())) errors.phone_number = 'Use international format with country code, e.g. +977XXXXXXXXX.';
     if (!form.business_email.trim()) errors.business_email = 'Email is required.';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.business_email.trim())) errors.business_email = 'Enter a valid email address.';
     if (!form.location_url.trim()) errors.location_url = 'Location URL is required.';
-    else if (!/^https?:\/\/.+/.test(form.location_url.trim())) errors.location_url = 'Must be a valid HTTPS URL.';
+    else {
+        try {
+            const url = new URL(form.location_url.trim());
+            const host = url.hostname.toLowerCase();
+            if (url.protocol !== 'https:') {
+                errors.location_url = 'Location URL must use HTTPS.';
+            } else if (!ALLOWED_MAP_HOSTS.some(allowed => host === allowed || host.endsWith(`.${allowed}`))) {
+                errors.location_url = 'Use a Google Maps, Apple Maps, or OpenStreetMap link.';
+            }
+        } catch {
+            errors.location_url = 'Enter a valid location URL.';
+        }
+    }
     return errors;
 }
 

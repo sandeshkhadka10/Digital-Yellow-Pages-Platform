@@ -49,6 +49,44 @@ export class ApiError extends Error {
     }
 }
 
+function extractErrorMessage(data: unknown, fallbackStatus: number): string {
+    if (typeof data === 'string' && data.trim()) {
+        return data.trim();
+    }
+
+    if (!data || typeof data !== 'object') {
+        return `Request failed with status ${fallbackStatus}`;
+    }
+
+    const payload = data as Record<string, unknown>;
+    if (typeof payload.detail === 'string' && payload.detail.trim()) {
+        return payload.detail.trim();
+    }
+
+    const messages: string[] = [];
+    for (const [key, value] of Object.entries(payload)) {
+        if (key === 'detail') continue;
+
+        if (Array.isArray(value)) {
+            const first = value.find(v => typeof v === 'string' && v.trim());
+            if (typeof first === 'string') {
+                messages.push(`${key}: ${first.trim()}`);
+                continue;
+            }
+        }
+
+        if (typeof value === 'string' && value.trim()) {
+            messages.push(`${key}: ${value.trim()}`);
+        }
+    }
+
+    if (messages.length > 0) {
+        return messages.join('\n');
+    }
+
+    return `Request failed with status ${fallbackStatus}`;
+}
+
 async function request<T>(
     path: string,
     options: RequestInit = {},
@@ -74,9 +112,7 @@ async function request<T>(
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-        const message =
-            (data as { detail?: string }).detail ?? `Request failed with status ${response.status}`;
-        throw new ApiError(response.status, message);
+        throw new ApiError(response.status, extractErrorMessage(data, response.status));
     }
 
     return data as T;

@@ -9,12 +9,13 @@ import { ListingCard } from '@/components/ui/listing-card';
 import { useAuth } from '@/context/auth-context';
 
 export default function HomeScreen() {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, signOut } = useAuth();
 
     const [listings, setListings] = useState<BusinessListing[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [isSigningOut, setIsSigningOut] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -56,6 +57,17 @@ export default function HomeScreen() {
         router.push(isAuthenticated ? '/(tabs)/add-listing' : '/(auth)/login' as never);
     };
 
+    const handleSignOut = useCallback(async () => {
+        if (!isAuthenticated || isSigningOut) return;
+        setIsSigningOut(true);
+        try {
+            await signOut();
+            router.replace('/(auth)/login' as never);
+        } finally {
+            setIsSigningOut(false);
+        }
+    }, [isAuthenticated, isSigningOut, signOut]);
+
     return (
         <SafeAreaView className="flex-1 bg-gray-50">
             {/* Header */}
@@ -67,12 +79,24 @@ export default function HomeScreen() {
                         </View>
                         <Text className="text-xl font-bold text-gray-900">DYP</Text>
                     </View>
-                    <Pressable onPress={handleAddBusiness}>
-                        <View className="flex-row items-center gap-1 rounded-xl bg-amber-400 px-4 py-2">
-                            <MaterialIcons name="add" size={18} color="#1f2937" />
-                            <Text className="text-sm font-semibold text-gray-900">Add Business</Text>
-                        </View>
-                    </Pressable>
+                    <View className="flex-row items-center gap-2">
+                        {isAuthenticated ? (
+                            <Pressable onPress={handleSignOut} disabled={isSigningOut}>
+                                <View className="flex-row items-center gap-1 rounded-xl border border-gray-200 bg-white px-3 py-2">
+                                    <MaterialIcons name="logout" size={16} color="#4b5563" />
+                                    <Text className="text-sm font-semibold text-gray-700">
+                                        {isSigningOut ? 'Signing out...' : 'Logout'}
+                                    </Text>
+                                </View>
+                            </Pressable>
+                        ) : null}
+                        <Pressable onPress={handleAddBusiness}>
+                            <View className="flex-row items-center gap-1 rounded-xl bg-amber-400 px-4 py-2">
+                                <MaterialIcons name="add" size={18} color="#1f2937" />
+                                <Text className="text-sm font-semibold text-gray-900">Add Business</Text>
+                            </View>
+                        </Pressable>
+                    </View>
                 </View>
                 <Pressable onPress={() => router.push('/(tabs)/search' as never)}>
                     <View className="flex-row items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">

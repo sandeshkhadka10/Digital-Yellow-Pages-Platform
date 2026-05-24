@@ -1,19 +1,17 @@
-import { router, Tabs } from 'expo-router';
+import { Tabs } from 'expo-router';
 import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { useAuth } from '@/context/auth-context';
 
 export default function TabLayout() {
-  const { isAuthenticated } = useAuth();
-
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#f59e0b',
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarItemStyle: { flex: 1 },
         tabBarStyle: { borderTopColor: '#e5e7eb' },
       }}>
       <Tabs.Screen
@@ -25,24 +23,11 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="search"
-        options={{
-          title: 'Search',
-          tabBarIcon: ({ color }) => <IconSymbol size={26} name="magnifyingglass" color={color} />,
-        }}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="add-listing"
-        options={{
-          title: 'Add Business',
-          tabBarIcon: ({ color }) => <IconSymbol size={26} name="plus.circle.fill" color={color} />,
-        }}
-        listeners={{
-          tabPress: (e) => {
-            if (isAuthenticated) return;
-            e.preventDefault();
-            router.push('/(auth)/login' as never);
-          },
-        }}
+        options={{ href: null }}
       />
     </Tabs>
   );

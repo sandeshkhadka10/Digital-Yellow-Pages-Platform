@@ -7,11 +7,6 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { ApiError, BusinessListing, listingsApi } from '@/lib/api';
 import { useAuth } from '@/context/auth-context';
 
-function formatDate(value: string) {
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
-}
-
 export default function ListingDetailScreen() {
     const { user, isAuthenticated } = useAuth();
     const params = useLocalSearchParams<{ id?: string | string[] }>();
@@ -35,11 +30,13 @@ export default function ListingDetailScreen() {
             return;
         }
 
+        const currentListingId: string = listingId;
+
         let isMounted = true;
 
         async function loadListing() {
             try {
-                const data = await listingsApi.getListing(listingId);
+                const data = await listingsApi.getListing(currentListingId);
                 if (isMounted) setListing(data);
             } catch (err) {
                 if (!isMounted) return;
@@ -204,13 +201,6 @@ export default function ListingDetailScreen() {
                                 </Pressable>
                             </View>
                         ) : null}
-
-                        <View className="mt-5 border-t border-gray-100 pt-4">
-                            <Text className="text-xs uppercase tracking-wide text-gray-400">Listing metadata</Text>
-                            <Text className="mt-2 text-sm text-gray-600">Owner: {listing.owner_email}</Text>
-                            <Text className="mt-1 text-sm text-gray-600">Created: {formatDate(listing.created_at)}</Text>
-                            <Text className="mt-1 text-sm text-gray-600">Updated: {formatDate(listing.updated_at)}</Text>
-                        </View>
                     </View>
                 </ScrollView>
             ) : null}

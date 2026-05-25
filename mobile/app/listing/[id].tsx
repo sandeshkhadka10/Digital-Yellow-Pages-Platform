@@ -30,7 +30,7 @@ export default function ListingDetailScreen() {
             return;
         }
 
-        const currentListingId: string = listingId;
+        const currentListingId = listingId;
 
         let isMounted = true;
 

@@ -9,37 +9,14 @@ import { AppInput } from '@/components/ui/app-input';
 import { useAuth } from '@/context/auth-context';
 import { extractCoordinatesFromMapUrl } from '@/lib/map-url';
 
-interface FormState {
-    business_title: string;
-    service_detail: string;
-    phone_number: string;
-    business_email: string;
-    location_url: string;
-    city: string;
-    region: string;
-}
+import {
+    getListingFormErrors,
+    listingFormSchema,
+    type ListingFormErrors,
+    type ListingFormValues,
+} from '../../../lib/listing-validation';
 
-interface FormErrors {
-    business_title?: string;
-    service_detail?: string;
-    phone_number?: string;
-    business_email?: string;
-    location_url?: string;
-    city?: string;
-    region?: string;
-    general?: string;
-}
-
-const ALLOWED_MAP_HOSTS = [
-    'maps.google.com',
-    'www.google.com',
-    'goo.gl',
-    'maps.apple.com',
-    'www.openstreetmap.org',
-    'osm.org',
-];
-
-function toFormState(listing: BusinessListing): FormState {
+function toFormState(listing: BusinessListing): ListingFormValues {
     return {
         business_title: listing.business_title,
         service_detail: listing.service_detail,
@@ -51,51 +28,14 @@ function toFormState(listing: BusinessListing): FormState {
     };
 }
 
-function validate(form: FormState): FormErrors {
-    const errors: FormErrors = {};
-
-    if (!form.business_title.trim()) errors.business_title = 'Business title is required.';
-    else if (form.business_title.trim().length < 3) errors.business_title = 'Must be at least 3 characters.';
-
-    if (!form.service_detail.trim()) errors.service_detail = 'Service description is required.';
-    else if (form.service_detail.trim().length < 20) errors.service_detail = 'Must be at least 20 characters.';
-
-    if (!form.phone_number.trim()) errors.phone_number = 'Phone number is required.';
-    else if (!/^\+[\d\s\-()]{7,25}$/.test(form.phone_number.trim())) {
-        errors.phone_number = 'Use international format with country code, e.g. +977XXXXXXXXX.';
-    }
-
-    if (!form.business_email.trim()) errors.business_email = 'Email is required.';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.business_email.trim())) {
-        errors.business_email = 'Enter a valid email address.';
-    }
-
-    if (!form.location_url.trim()) errors.location_url = 'Location URL is required.';
-    else {
-        try {
-            const url = new URL(form.location_url.trim());
-            const host = url.hostname.toLowerCase();
-            if (url.protocol !== 'https:') {
-                errors.location_url = 'Location URL must use HTTPS.';
-            } else if (!ALLOWED_MAP_HOSTS.some(allowed => host === allowed || host.endsWith(`.${allowed}`))) {
-                errors.location_url = 'Use a Google Maps, Apple Maps, or OpenStreetMap link.';
-            }
-        } catch {
-            errors.location_url = 'Enter a valid location URL.';
-        }
-    }
-
-    return errors;
-}
-
 export default function EditListingScreen() {
     const { user, isAuthenticated } = useAuth();
     const params = useLocalSearchParams<{ id?: string | string[] }>();
     const listingId = Array.isArray(params.id) ? params.id[0] : params.id;
 
     const [listing, setListing] = useState<BusinessListing | null>(null);
-    const [form, setForm] = useState<FormState | null>(null);
-    const [errors, setErrors] = useState<FormErrors>({});
+    const [form, setForm] = useState<ListingFormValues | null>(null);
+    const [errors, setErrors] = useState<ListingFormErrors>({});
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -136,34 +76,35 @@ export default function EditListingScreen() {
         };
     }, [listingId]);
 
-    const setField = (field: keyof FormState) => (value: string) => {
-        setForm(prev => (prev ? { ...prev, [field]: value } : prev));
-        setErrors(prev => ({ ...prev, [field]: undefined, general: undefined }));
+    const setField = (field: keyof ListingFormValues) => (value: string) => {
+        setForm((prev: ListingFormValues | null) => (prev ? { ...prev, [field]: value } : prev));
+        setErrors((prev: ListingFormErrors) => ({ ...prev, [field]: undefined, general: undefined }));
     };
 
     const handleUpdate = async () => {
         if (!listingId || !form) return;
 
-        const validationErrors = validate(form);
-        if (Object.keys(validationErrors).length > 0) {
-            setErrors(validationErrors);
+        const parsed = listingFormSchema.safeParse(form);
+        if (!parsed.success) {
+            setErrors(getListingFormErrors(parsed.error));
             return;
         }
 
         setIsSubmitting(true);
         try {
-            const normalizedLocationUrl = form.location_url.trim();
+            const values = parsed.data;
+            const normalizedLocationUrl = values.location_url;
             const coordinates = extractCoordinatesFromMapUrl(normalizedLocationUrl);
             const payload: CreateListingPayload = {
-                business_title: form.business_title.trim(),
-                service_detail: form.service_detail.trim(),
-                phone_number: form.phone_number.trim(),
-                business_email: form.business_email.trim(),
+                business_title: values.business_title,
+                service_detail: values.service_detail,
+                phone_number: values.phone_number,
+                business_email: values.business_email,
                 location_url: normalizedLocationUrl,
                 latitude: coordinates?.latitude,
                 longitude: coordinates?.longitude,
-                city: form.city.trim() || undefined,
-                region: form.region.trim() || undefined,
+                city: values.city || undefined,
+                region: values.region || undefined,
             };
             await listingsApi.updateListing(listingId, payload);
             Alert.alert('Listing updated', 'Your changes were saved.', [

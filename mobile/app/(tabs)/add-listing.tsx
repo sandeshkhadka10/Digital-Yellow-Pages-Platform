@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
     Alert,
-    Pressable,
     ScrollView,
     Text,
     View,
@@ -16,110 +15,74 @@ import { AppInput } from '@/components/ui/app-input';
 import { AppButton } from '@/components/ui/app-button';
 import { extractCoordinatesFromMapUrl } from '@/lib/map-url';
 
-interface FormState {
-    business_title: string;
-    service_detail: string;
-    phone_number: string;
-    business_email: string;
-    location_url: string;
-    city: string;
-    region: string;
-}
-
-interface FormErrors {
-    business_title?: string;
-    service_detail?: string;
-    phone_number?: string;
-    business_email?: string;
-    location_url?: string;
-    city?: string;
-    region?: string;
-    general?: string;
-}
-
-const INITIAL_FORM: FormState = {
-    business_title: '',
-    service_detail: '',
-    phone_number: '',
-    business_email: '',
-    location_url: '',
-    city: '',
-    region: '',
-};
-
-const ALLOWED_MAP_HOSTS = [
-    'maps.google.com',
-    'www.google.com',
-    'goo.gl',
-    'maps.apple.com',
-    'www.openstreetmap.org',
-    'osm.org',
-];
-
-function validate(form: FormState): FormErrors {
-    const errors: FormErrors = {};
-    if (!form.business_title.trim()) errors.business_title = 'Business title is required.';
-    else if (form.business_title.trim().length < 3) errors.business_title = 'Must be at least 3 characters.';
-    if (!form.service_detail.trim()) errors.service_detail = 'Service description is required.';
-    else if (form.service_detail.trim().length < 20) errors.service_detail = 'Must be at least 20 characters.';
-    if (!form.phone_number.trim()) errors.phone_number = 'Phone number is required.';
-    else if (!/^\+[\d\s\-()]{7,25}$/.test(form.phone_number.trim())) errors.phone_number = 'Use international format with country code, e.g. +977XXXXXXXXX.';
-    if (!form.business_email.trim()) errors.business_email = 'Email is required.';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.business_email.trim())) errors.business_email = 'Enter a valid email address.';
-    if (!form.location_url.trim()) errors.location_url = 'Location URL is required.';
-    else {
-        try {
-            const url = new URL(form.location_url.trim());
-            const host = url.hostname.toLowerCase();
-            if (url.protocol !== 'https:') {
-                errors.location_url = 'Location URL must use HTTPS.';
-            } else if (!ALLOWED_MAP_HOSTS.some(allowed => host === allowed || host.endsWith(`.${allowed}`))) {
-                errors.location_url = 'Use a Google Maps, Apple Maps, or OpenStreetMap link.';
-            }
-        } catch {
-            errors.location_url = 'Enter a valid location URL.';
-        }
-    }
-    return errors;
-}
+import {
+    getListingFormErrors,
+    listingFormSchema,
+    type ListingFormErrors,
+    type ListingFormValues,
+} from '../../lib/listing-validation';
 
 export default function AddListingScreen() {
     const { isAuthenticated } = useAuth();
-    const [form, setForm] = useState<FormState>(INITIAL_FORM);
-    const [errors, setErrors] = useState<FormErrors>({});
+    const [form, setForm] = useState<ListingFormValues>({
+        business_title: '',
+        service_detail: '',
+        phone_number: '',
+        business_email: '',
+        location_url: '',
+        city: '',
+        region: '',
+    });
+    const [errors, setErrors] = useState<ListingFormErrors>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const setField = (field: keyof FormState) => (value: string) => {
-        setForm(prev => ({ ...prev, [field]: value }));
-        setErrors(prev => ({ ...prev, [field]: undefined }));
+    const setField = (field: keyof ListingFormValues) => (value: string) => {
+        setForm((prev: ListingFormValues) => ({ ...prev, [field]: value }));
+        setErrors((prev: ListingFormErrors) => ({ ...prev, [field]: undefined, general: undefined }));
     };
 
     const handleSubmit = async () => {
-        const validationErrors = validate(form);
-        if (Object.keys(validationErrors).length > 0) {
-            setErrors(validationErrors);
+        const parsed = listingFormSchema.safeParse(form);
+        if (!parsed.success) {
+            setErrors(getListingFormErrors(parsed.error));
             return;
         }
+
         setIsSubmitting(true);
         try {
-            const normalizedLocationUrl = form.location_url.trim();
+            const values = parsed.data;
+            const normalizedLocationUrl = values.location_url;
             const coordinates = extractCoordinatesFromMapUrl(normalizedLocationUrl);
             const payload: CreateListingPayload = {
-                business_title: form.business_title.trim(),
-                service_detail: form.service_detail.trim(),
-                phone_number: form.phone_number.trim(),
-                business_email: form.business_email.trim(),
+                business_title: values.business_title,
+                service_detail: values.service_detail,
+                phone_number: values.phone_number,
+                business_email: values.business_email,
                 location_url: normalizedLocationUrl,
                 latitude: coordinates?.latitude,
                 longitude: coordinates?.longitude,
-                city: form.city.trim() || undefined,
-                region: form.region.trim() || undefined,
+                city: values.city || undefined,
+                region: values.region || undefined,
             };
             await listingsApi.createListing(payload);
             Alert.alert(
                 'Listing Created!',
                 'Your business has been successfully added to the directory.',
-                [{ text: 'View Listings', onPress: () => { setForm(INITIAL_FORM); router.replace('/(tabs)' as never); } }],
+                [{
+                    text: 'View Listings',
+                    onPress: () => {
+                        setForm({
+                            business_title: '',
+                            service_detail: '',
+                            phone_number: '',
+                            business_email: '',
+                            location_url: '',
+                            city: '',
+                            region: '',
+                        });
+                        router.replace('/(tabs)' as never);
+                    },
+                }],
             );
         } catch (err) {
             if (err instanceof ApiError) {

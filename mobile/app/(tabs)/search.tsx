@@ -14,6 +14,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as Location from 'expo-location';
 
 import { listingsApi, BusinessListingSearchResult, SearchListingsParams } from '@/lib/api';
+import { searchRadiusKmSchema } from '@/lib/search-validation';
 import { ListingCard } from '@/components/ui/listing-card';
 import { AppInput } from '@/components/ui/app-input';
 
@@ -51,9 +52,15 @@ export default function SearchScreen() {
             if (city.trim()) searchParams.city = city.trim();
             if (region.trim()) searchParams.region = region.trim();
             if (useGps && gpsCoords) {
+                const radiusResult = searchRadiusKmSchema.safeParse(radiusKm);
+                if (!radiusResult.success) {
+                    setError(radiusResult.error.issues[0]?.message ?? 'Radius must be a valid number.');
+                    return;
+                }
+
                 searchParams.lat = gpsCoords.lat;
                 searchParams.lng = gpsCoords.lng;
-                searchParams.radius_km = parseFloat(radiusKm) || 10;
+                searchParams.radius_km = radiusResult.data;
             }
 
             const data = await listingsApi.search(searchParams);

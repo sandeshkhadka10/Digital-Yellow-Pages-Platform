@@ -208,7 +208,8 @@ export interface BusinessListingSearchResult {
     service_detail: string;
     phone_number: string;
     business_email: string;
-    location_url: string;
+    latitude: number | null;
+    longitude: number | null;
     distance_km: number | null;
     city: string;
     region: string;
@@ -226,7 +227,6 @@ export interface CreateListingPayload {
     service_detail: string;
     phone_number: string;
     business_email: string;
-    location_url: string;
     latitude?: number;
     longitude?: number;
     city?: string;

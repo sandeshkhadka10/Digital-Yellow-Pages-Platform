@@ -1,14 +1,5 @@
 import { z } from 'zod';
 
-export const ALLOWED_MAP_HOSTS = [
-    'maps.google.com',
-    'www.google.com',
-    'goo.gl',
-    'maps.apple.com',
-    'www.openstreetmap.org',
-    'osm.org',
-];
-
 export const listingFormSchema = z.object({
     business_title: z
         .string()
@@ -30,35 +21,6 @@ export const listingFormSchema = z.object({
         .trim()
         .min(1, 'Email is required.')
         .email('Enter a valid email address.'),
-    location_url: z
-        .string()
-        .trim()
-        .min(1, 'Location URL is required.')
-        .superRefine((value, ctx) => {
-            try {
-                const url = new URL(value);
-                if (url.protocol !== 'https:') {
-                    ctx.addIssue({
-                        code: z.ZodIssueCode.custom,
-                        message: 'Location URL must use HTTPS.',
-                    });
-                    return;
-                }
-
-                const hostname = url.hostname.toLowerCase();
-                if (!ALLOWED_MAP_HOSTS.some(allowed => hostname.endsWith(allowed))) {
-                    ctx.addIssue({
-                        code: z.ZodIssueCode.custom,
-                        message: 'Use a Google Maps, Apple Maps, or OpenStreetMap link.',
-                    });
-                }
-            } catch {
-                ctx.addIssue({
-                    code: z.ZodIssueCode.custom,
-                    message: 'Enter a valid location URL.',
-                });
-            }
-        }),
     city: z.string().trim(),
     region: z.string().trim(),
 });
@@ -70,7 +32,6 @@ export interface ListingFormErrors {
     service_detail?: string;
     phone_number?: string;
     business_email?: string;
-    location_url?: string;
     city?: string;
     region?: string;
     general?: string;
@@ -84,7 +45,6 @@ export function getListingFormErrors(error: z.ZodError): ListingFormErrors {
         service_detail: fieldErrors.service_detail?.[0],
         phone_number: fieldErrors.phone_number?.[0],
         business_email: fieldErrors.business_email?.[0],
-        location_url: fieldErrors.location_url?.[0],
         city: fieldErrors.city?.[0],
         region: fieldErrors.region?.[0],
         general: undefined,

@@ -22,8 +22,8 @@ class BusinessListing(models.Model):
 
     business_email = models.EmailField()
 
-    # Google Maps / Apple Maps / OSM URL
-    location_url = models.URLField(max_length=500)
+    # Google Maps / Apple Maps / OSM URL (optional — coordinates now sourced from GPS pin)
+    location_url = models.URLField(max_length=500, blank=True, default="")
 
     # Optional geo fields for radius searches
     latitude = models.FloatField(null=True, blank=True)
@@ -44,7 +44,9 @@ class BusinessListing(models.Model):
             models.Index(fields=["city"]),
             models.Index(fields=["region"]),
             models.Index(fields=["is_active"]),
-            models.Index(fields=["latitude", "longitude"], name="business_li_lat_lon_idx"),
+            models.Index(
+                fields=["latitude", "longitude"], name="business_li_lat_lon_idx"
+            ),
         ]
 
     def __str__(self):

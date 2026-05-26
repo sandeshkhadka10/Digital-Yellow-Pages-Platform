@@ -58,8 +58,8 @@ export default function ListingDetailScreen() {
     }, [listingId]);
 
     const openMap = async () => {
-        if (!listing) return;
-        await Linking.openURL(listing.location_url);
+        if (!listing?.latitude || !listing?.longitude) return;
+        await Linking.openURL(`https://maps.google.com/maps?q=${listing.latitude},${listing.longitude}`);
     };
 
     const callBusiness = async () => {
@@ -159,10 +159,6 @@ export default function ListingDetailScreen() {
                                 <MaterialIcons name="phone" size={18} color="#f59e0b" />
                                 <Text className="flex-1 text-sm text-gray-700">{listing.phone_number}</Text>
                             </View>
-                            <View className="flex-row items-center gap-3">
-                                <MaterialIcons name="link" size={18} color="#f59e0b" />
-                                <Text className="flex-1 text-sm text-gray-700" numberOfLines={2}>{listing.location_url}</Text>
-                            </View>
                         </View>
 
                         <View className="flex-row gap-2">
@@ -174,10 +170,12 @@ export default function ListingDetailScreen() {
                                 <MaterialIcons name="mail" size={16} color="#6b7280" />
                                 <Text className="text-sm font-semibold text-gray-600">Email</Text>
                             </Pressable>
-                            <Pressable onPress={openMap} className="flex-1 flex-row items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white py-3 active:bg-gray-50">
-                                <MaterialIcons name="map" size={16} color="#6b7280" />
-                                <Text className="text-sm font-semibold text-gray-600">Map</Text>
-                            </Pressable>
+                            {listing.latitude != null && listing.longitude != null ? (
+                                <Pressable onPress={openMap} className="flex-1 flex-row items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white py-3 active:bg-gray-50">
+                                    <MaterialIcons name="map" size={16} color="#6b7280" />
+                                    <Text className="text-sm font-semibold text-gray-600">Map</Text>
+                                </Pressable>
+                            ) : null}
                         </View>
 
                         {isOwner ? (

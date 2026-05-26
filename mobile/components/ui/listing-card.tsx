@@ -8,7 +8,8 @@ export interface ListingCardData {
     service_detail: string;
     phone_number: string;
     business_email: string;
-    location_url: string;
+    latitude?: number | null;
+    longitude?: number | null;
     city?: string;
     region?: string;
     distance_km?: number | null;
@@ -21,7 +22,12 @@ interface ListingCardProps {
 
 export function ListingCard({ listing, onPress }: ListingCardProps) {
     const handleCall = () => Linking.openURL(`tel:${listing.phone_number}`);
-    const handleMap = () => Linking.openURL(listing.location_url);
+    const handleMap = () => {
+        if (listing.latitude != null && listing.longitude != null) {
+            Linking.openURL(`https://maps.google.com/maps?q=${listing.latitude},${listing.longitude}`);
+        }
+    };
+    const hasMap = listing.latitude != null && listing.longitude != null;
 
     const locationParts = [listing.city, listing.region].filter(Boolean);
     const locationLabel = locationParts.join(', ');
@@ -70,13 +76,15 @@ export function ListingCard({ listing, onPress }: ListingCardProps) {
                         <MaterialIcons name="phone" size={16} color="#1f2937" />
                         <Text className="text-sm font-semibold text-gray-900">Call</Text>
                     </Pressable>
-                    <Pressable
-                        onPress={handleMap}
-                        className="flex-1 flex-row items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white py-2.5 active:bg-gray-50"
-                    >
-                        <MaterialIcons name="map" size={16} color="#6b7280" />
-                        <Text className="text-sm font-semibold text-gray-600">Map</Text>
-                    </Pressable>
+                    {hasMap ? (
+                        <Pressable
+                            onPress={handleMap}
+                            className="flex-1 flex-row items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white py-2.5 active:bg-gray-50"
+                        >
+                            <MaterialIcons name="map" size={16} color="#6b7280" />
+                            <Text className="text-sm font-semibold text-gray-600">Map</Text>
+                        </Pressable>
+                    ) : null}
                 </View>
             </View>
         </Pressable>

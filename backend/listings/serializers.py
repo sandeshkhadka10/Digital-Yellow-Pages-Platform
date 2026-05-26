@@ -30,7 +30,9 @@ class BusinessListingSerializer(serializers.ModelSerializer):
     def validate_business_title(self, value):
         value = value.strip()
         if len(value) < 3:
-            raise serializers.ValidationError("Business title must be at least 3 characters.")
+            raise serializers.ValidationError(
+                "Business title must be at least 3 characters."
+            )
         return value
 
     def validate_service_detail(self, value):
@@ -40,7 +42,9 @@ class BusinessListingSerializer(serializers.ModelSerializer):
                 "Service detail must be at least 20 characters. Please describe your services clearly."
             )
         if len(value) > 2000:
-            raise serializers.ValidationError("Service detail must be 2000 characters or fewer.")
+            raise serializers.ValidationError(
+                "Service detail must be 2000 characters or fewer."
+            )
         return value
 
     def validate_phone_number(self, value):
@@ -50,13 +54,18 @@ class BusinessListingSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     "Invalid phone number. Please use international format, e.g. +977-1-4123456."
                 )
-            return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
+            return phonenumbers.format_number(
+                parsed, phonenumbers.PhoneNumberFormat.E164
+            )
         except phonenumbers.NumberParseException:
             raise serializers.ValidationError(
                 "Could not parse phone number. Include country code, e.g. +977XXXXXXXXX."
             )
 
     def validate_location_url(self, value):
+        cleaned = value.strip() if value else ""
+        if not cleaned:
+            return cleaned
         allowed_hosts = [
             "maps.google.com",
             "www.google.com",
@@ -66,7 +75,7 @@ class BusinessListingSerializer(serializers.ModelSerializer):
             "osm.org",
         ]
         from urllib.parse import urlparse
-        cleaned = value.strip()
+
         parsed = urlparse(cleaned)
         if parsed.scheme != "https":
             raise serializers.ValidationError("Location URL must use HTTPS.")
@@ -94,13 +103,16 @@ class BusinessListingSerializer(serializers.ModelSerializer):
         instance = getattr(self, "instance", None)
         latitude = attrs.get("latitude", getattr(instance, "latitude", None))
         longitude = attrs.get("longitude", getattr(instance, "longitude", None))
-        if (latitude is None) ^ (longitude is None):
-            raise serializers.ValidationError("Provide both latitude and longitude, or neither.")
+        if latitude is None or longitude is None:
+            raise serializers.ValidationError(
+                "Business location pin is required. Please pin your current location."
+            )
         return attrs
 
 
 class BusinessListingSearchSerializer(serializers.ModelSerializer):
     """Lightweight serializer for search result listing cards."""
+
     distance_km = serializers.SerializerMethodField()
 
     class Meta:
@@ -111,7 +123,8 @@ class BusinessListingSearchSerializer(serializers.ModelSerializer):
             "service_detail",
             "phone_number",
             "business_email",
-            "location_url",
+            "latitude",
+            "longitude",
             "distance_km",
             "city",
             "region",

@@ -23,7 +23,6 @@ function toFormState(listing: BusinessListing): ListingFormValues {
         service_detail: listing.service_detail,
         phone_number: listing.phone_number,
         business_email: listing.business_email,
-        location_url: listing.location_url,
         city: listing.city ?? '',
         region: listing.region ?? '',
     };
@@ -119,6 +118,10 @@ export default function EditListingScreen() {
             setErrors(getListingFormErrors(parsed.error));
             return;
         }
+        if (!gpsCoords) {
+            setErrors(prev => ({ ...prev, general: 'Business location pin is required. Please pin your current location.' }));
+            return;
+        }
 
         setIsSubmitting(true);
         try {
@@ -128,7 +131,6 @@ export default function EditListingScreen() {
                 service_detail: values.service_detail,
                 phone_number: values.phone_number,
                 business_email: values.business_email,
-                location_url: values.location_url,
                 latitude: gpsCoords?.latitude,
                 longitude: gpsCoords?.longitude,
                 city: values.city || undefined,
@@ -211,42 +213,41 @@ export default function EditListingScreen() {
                     </View>
                     <AppInput label="Phone Number *" value={form.phone_number} onChangeText={setField('phone_number')} placeholder="+977XXXXXXXXX" keyboardType="phone-pad" error={errors.phone_number} hint="International format with country code, e.g. +977-9841000000" returnKeyType="next" />
                     <AppInput label="Business Email *" value={form.business_email} onChangeText={setField('business_email')} placeholder="info@yourbusiness.com" keyboardType="email-address" autoCapitalize="none" error={errors.business_email} returnKeyType="next" />
-                    <AppInput label="Location URL *" value={form.location_url} onChangeText={setField('location_url')} placeholder="https://maps.google.com/?q=..." keyboardType="url" autoCapitalize="none" error={errors.location_url} hint="Google Maps, Apple Maps, or OpenStreetMap HTTPS link" returnKeyType="next" />
+                    <View className="rounded-xl border border-amber-100 bg-amber-50 p-4">
+                        <Text className="mb-1.5 text-sm font-semibold text-gray-800">Business Location Pin *</Text>
+                        <Text className="mb-3 text-xs text-gray-500">Required — used to show your business in radius searches.</Text>
+                        {gpsCoords ? (
+                            <View className="flex-row items-center justify-between rounded-xl border border-green-200 bg-green-50 px-3 py-2.5">
+                                <View className="flex-row items-center gap-2">
+                                    <MaterialIcons name="location-on" size={16} color="#16a34a" />
+                                    <Text className="text-xs text-green-700">{gpsLabel}</Text>
+                                </View>
+                                <Pressable onPress={() => { setGpsCoords(null); setGpsLabel(''); }}>
+                                    <Text className="text-xs text-red-400">Remove</Text>
+                                </Pressable>
+                            </View>
+                        ) : (
+                            <Pressable
+                                onPress={handleGetLocation}
+                                disabled={isGettingLocation}
+                                className="flex-row items-center justify-center gap-2 rounded-xl border border-dashed border-amber-300 bg-white py-3 active:bg-amber-100"
+                            >
+                                {isGettingLocation ? (
+                                    <ActivityIndicator size="small" color="#f59e0b" />
+                                ) : (
+                                    <MaterialIcons name="my-location" size={16} color="#d97706" />
+                                )}
+                                <Text className="text-sm font-medium text-amber-700">
+                                    {isGettingLocation ? 'Getting location...' : 'Pin my current location'}
+                                </Text>
+                            </Pressable>
+                        )}
+                    </View>
                     <View className="rounded-xl border border-gray-100 bg-gray-50 p-4">
                         <Text className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Location (Optional)</Text>
                         <View className="gap-3">
                             <AppInput label="City" value={form.city} onChangeText={setField('city')} placeholder="e.g. Kathmandu" returnKeyType="next" />
                             <AppInput label="Region / Province" value={form.region} onChangeText={setField('region')} placeholder="e.g. Bagmati" returnKeyType="done" />
-                            <View>
-                                <Text className="mb-1.5 text-sm font-medium text-gray-700">Business Location Pin</Text>
-                                {gpsCoords ? (
-                                    <View className="flex-row items-center justify-between rounded-xl border border-green-200 bg-green-50 px-3 py-2.5">
-                                        <View className="flex-row items-center gap-2">
-                                            <MaterialIcons name="location-on" size={16} color="#16a34a" />
-                                            <Text className="text-xs text-green-700">{gpsLabel}</Text>
-                                        </View>
-                                        <Pressable onPress={() => { setGpsCoords(null); setGpsLabel(''); }}>
-                                            <Text className="text-xs text-red-400">Remove</Text>
-                                        </Pressable>
-                                    </View>
-                                ) : (
-                                    <Pressable
-                                        onPress={handleGetLocation}
-                                        disabled={isGettingLocation}
-                                        className="flex-row items-center justify-center gap-2 rounded-xl border border-dashed border-amber-300 bg-amber-50 py-3 active:bg-amber-100"
-                                    >
-                                        {isGettingLocation ? (
-                                            <ActivityIndicator size="small" color="#f59e0b" />
-                                        ) : (
-                                            <MaterialIcons name="my-location" size={16} color="#d97706" />
-                                        )}
-                                        <Text className="text-sm font-medium text-amber-700">
-                                            {isGettingLocation ? 'Getting location...' : 'Pin my current location'}
-                                        </Text>
-                                    </Pressable>
-                                )}
-                                <Text className="mt-1.5 text-xs text-gray-400">Used to appear in "near me" radius searches.</Text>
-                            </View>
                         </View>
                     </View>
                     <View className="gap-3">

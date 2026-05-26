@@ -40,6 +40,14 @@ export default function AddListingScreen() {
     const [gpsLabel, setGpsLabel] = useState('');
     const [isGettingLocation, setIsGettingLocation] = useState(false);
 
+    const handleBack = () => {
+        if (router.canGoBack()) {
+            router.back();
+            return;
+        }
+        router.replace('/(tabs)' as never);
+    };
+
     const setField = (field: keyof ListingFormValues) => (value: string) => {
         setForm((prev: ListingFormValues) => ({ ...prev, [field]: value }));
         setErrors((prev: ListingFormErrors) => ({ ...prev, [field]: undefined, general: undefined }));
@@ -123,6 +131,11 @@ export default function AddListingScreen() {
     if (!isAuthenticated) {
         return (
             <SafeAreaView className="flex-1 bg-white">
+                <View className="px-4 pb-2 pt-2">
+                    <Pressable onPress={handleBack} className="h-10 w-10 items-center justify-center rounded-xl bg-gray-100">
+                        <MaterialIcons name="arrow-back" size={20} color="#1f2937" />
+                    </Pressable>
+                </View>
                 <View className="flex-1 items-center justify-center px-6">
                     <View className="mb-6 h-20 w-20 items-center justify-center rounded-full bg-amber-50">
                         <MaterialIcons name="lock-outline" size={36} color="#f59e0b" />
@@ -144,8 +157,15 @@ export default function AddListingScreen() {
         <SafeAreaView className="flex-1 bg-white">
             <ScrollView contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                 <View className="border-b border-gray-100 px-4 pb-4 pt-4">
-                    <Text className="text-xl font-bold text-gray-900">Add Business</Text>
-                    <Text className="mt-1 text-sm text-gray-500">Fill in your business details to list in the directory.</Text>
+                    <View className="flex-row items-center gap-3">
+                        <Pressable onPress={handleBack} className="h-10 w-10 items-center justify-center rounded-xl bg-gray-100">
+                            <MaterialIcons name="arrow-back" size={20} color="#1f2937" />
+                        </Pressable>
+                        <View className="flex-1">
+                            <Text className="text-xl font-bold text-gray-900">Add Business</Text>
+                            <Text className="mt-1 text-sm text-gray-500">Fill in your business details to list in the directory.</Text>
+                        </View>
+                    </View>
                 </View>
                 <View className="gap-4 px-4 pt-5">
                     {errors.general ? (

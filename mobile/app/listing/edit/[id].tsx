@@ -42,6 +42,18 @@ export default function EditListingScreen() {
     const [gpsLabel, setGpsLabel] = useState('');
     const [isGettingLocation, setIsGettingLocation] = useState(false);
 
+    const handleBack = () => {
+        if (router.canGoBack()) {
+            router.back();
+            return;
+        }
+        if (listingId) {
+            router.replace({ pathname: '/listing/[id]', params: { id: listingId } });
+            return;
+        }
+        router.replace('/(tabs)' as never);
+    };
+
     const isOwner = useMemo(() => {
         if (!user?.email || !listing?.owner_email) return false;
         return user.email.toLowerCase() === listing.owner_email.toLowerCase();
@@ -151,6 +163,11 @@ export default function EditListingScreen() {
     if (!isAuthenticated) {
         return (
             <SafeAreaView className="flex-1 bg-white">
+                <View className="px-4 pb-2 pt-2">
+                    <Pressable onPress={handleBack} className="h-10 w-10 items-center justify-center rounded-xl bg-gray-100">
+                        <MaterialIcons name="arrow-back" size={20} color="#1f2937" />
+                    </Pressable>
+                </View>
                 <View className="flex-1 items-center justify-center px-6 gap-4">
                     <Text className="text-center text-2xl font-bold text-gray-900">Sign in required</Text>
                     <Text className="text-center text-base text-gray-500">You must be logged in to edit a listing.</Text>
@@ -197,8 +214,15 @@ export default function EditListingScreen() {
         <SafeAreaView className="flex-1 bg-white">
             <ScrollView contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                 <View className="border-b border-gray-100 px-4 pb-4 pt-4">
-                    <Text className="text-xl font-bold text-gray-900">Edit Business</Text>
-                    <Text className="mt-1 text-sm text-gray-500">Update your business details.</Text>
+                    <View className="flex-row items-center gap-3">
+                        <Pressable onPress={handleBack} className="h-10 w-10 items-center justify-center rounded-xl bg-gray-100">
+                            <MaterialIcons name="arrow-back" size={20} color="#1f2937" />
+                        </Pressable>
+                        <View className="flex-1">
+                            <Text className="text-xl font-bold text-gray-900">Edit Business</Text>
+                            <Text className="mt-1 text-sm text-gray-500">Update your business details.</Text>
+                        </View>
+                    </View>
                 </View>
                 <View className="gap-4 px-4 pt-5">
                     {errors.general ? (

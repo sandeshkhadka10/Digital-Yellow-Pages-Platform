@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import {
+    ActivityIndicator,
     Alert,
+    Pressable,
     ScrollView,
     Text,
     View,
@@ -8,12 +10,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import * as Location from 'expo-location';
 
 import { listingsApi, CreateListingPayload, ApiError } from '@/lib/api';
 import { useAuth } from '@/context/auth-context';
 import { AppInput } from '@/components/ui/app-input';
 import { AppButton } from '@/components/ui/app-button';
-import { extractCoordinatesFromMapUrl } from '@/lib/map-url';
 
 import {
     getListingFormErrors,
@@ -35,10 +37,32 @@ export default function AddListingScreen() {
     });
     const [errors, setErrors] = useState<ListingFormErrors>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [gpsCoords, setGpsCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+    const [gpsLabel, setGpsLabel] = useState('');
+    const [isGettingLocation, setIsGettingLocation] = useState(false);
 
     const setField = (field: keyof ListingFormValues) => (value: string) => {
         setForm((prev: ListingFormValues) => ({ ...prev, [field]: value }));
         setErrors((prev: ListingFormErrors) => ({ ...prev, [field]: undefined, general: undefined }));
+    };
+
+    const handleGetLocation = async () => {
+        setIsGettingLocation(true);
+        try {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                setErrors(prev => ({ ...prev, general: 'Location permission denied.' }));
+                return;
+            }
+            const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+            setGpsCoords({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+            const [place] = await Location.reverseGeocodeAsync({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+            setGpsLabel(place ? [place.city, place.region].filter(Boolean).join(', ') : `${loc.coords.latitude.toFixed(5)}, ${loc.coords.longitude.toFixed(5)}`);
+        } catch {
+            setErrors(prev => ({ ...prev, general: 'Could not get your location. Please try again.' }));
+        } finally {
+            setIsGettingLocation(false);
+        }
     };
 
     const handleSubmit = async () => {
@@ -51,16 +75,14 @@ export default function AddListingScreen() {
         setIsSubmitting(true);
         try {
             const values = parsed.data;
-            const normalizedLocationUrl = values.location_url;
-            const coordinates = extractCoordinatesFromMapUrl(normalizedLocationUrl);
             const payload: CreateListingPayload = {
                 business_title: values.business_title,
                 service_detail: values.service_detail,
                 phone_number: values.phone_number,
                 business_email: values.business_email,
-                location_url: normalizedLocationUrl,
-                latitude: coordinates?.latitude,
-                longitude: coordinates?.longitude,
+                location_url: values.location_url,
+                latitude: gpsCoords?.latitude,
+                longitude: gpsCoords?.longitude,
                 city: values.city || undefined,
                 region: values.region || undefined,
             };
@@ -80,6 +102,8 @@ export default function AddListingScreen() {
                             city: '',
                             region: '',
                         });
+                        setGpsCoords(null);
+                        setGpsLabel('');
                         router.replace('/(tabs)' as never);
                     },
                 }],
@@ -141,6 +165,36 @@ export default function AddListingScreen() {
                         <View className="gap-3">
                             <AppInput label="City" value={form.city} onChangeText={setField('city')} placeholder="e.g. Kathmandu" returnKeyType="next" />
                             <AppInput label="Region / Province" value={form.region} onChangeText={setField('region')} placeholder="e.g. Bagmati" returnKeyType="done" />
+                            <View>
+                                <Text className="mb-1.5 text-sm font-medium text-gray-700">Business Location Pin</Text>
+                                {gpsCoords ? (
+                                    <View className="flex-row items-center justify-between rounded-xl border border-green-200 bg-green-50 px-3 py-2.5">
+                                        <View className="flex-row items-center gap-2">
+                                            <MaterialIcons name="location-on" size={16} color="#16a34a" />
+                                            <Text className="text-xs text-green-700">{gpsLabel}</Text>
+                                        </View>
+                                        <Pressable onPress={() => { setGpsCoords(null); setGpsLabel(''); }}>
+                                            <Text className="text-xs text-red-400">Remove</Text>
+                                        </Pressable>
+                                    </View>
+                                ) : (
+                                    <Pressable
+                                        onPress={handleGetLocation}
+                                        disabled={isGettingLocation}
+                                        className="flex-row items-center justify-center gap-2 rounded-xl border border-dashed border-amber-300 bg-amber-50 py-3 active:bg-amber-100"
+                                    >
+                                        {isGettingLocation ? (
+                                            <ActivityIndicator size="small" color="#f59e0b" />
+                                        ) : (
+                                            <MaterialIcons name="my-location" size={16} color="#d97706" />
+                                        )}
+                                        <Text className="text-sm font-medium text-amber-700">
+                                            {isGettingLocation ? 'Getting location...' : 'Pin my current location'}
+                                        </Text>
+                                    </Pressable>
+                                )}
+                                <Text className="mt-1.5 text-xs text-gray-400">Used to appear in "near me" radius searches.</Text>
+                            </View>
                         </View>
                         <Text className="mt-2 text-xs text-gray-400">Adding city and region helps customers find you in location-based searches.</Text>
                     </View>

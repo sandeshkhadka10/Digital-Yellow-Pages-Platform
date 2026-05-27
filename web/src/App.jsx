@@ -1,14 +1,8 @@
-import react from 'react'
 import './index.css'
+import { SearchPage } from './components/SearchPage'
 
 function App() {
-  return (
-    <div>
-      <h1 className='text-3xl font-bold underline text-center text-blue-500'>
-        Hello World!
-      </h1>
-    </div>
-  )
+  return <SearchPage />
 }
 
 export default App;

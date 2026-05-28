@@ -34,7 +34,7 @@ function getBaseUrl() {
             : 'http://localhost:8000/api';
     }
 
-    return 'http://127.0.0.1:8000/api';
+    throw new Error('EXPO_PUBLIC_API_URL must be set for production builds.');
 }
 
 const BASE_URL = getBaseUrl();

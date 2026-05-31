@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Linking, ScrollView } from 'react-native';
+import { Linking, ScrollView, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import MapView, { Marker } from 'react-native-maps';
 import { Box } from '@/components/ui/box';
 import { Text } from '@/components/ui/text';
 import { Pressable } from '@/components/ui/pressable';
@@ -31,6 +33,10 @@ export default function ListingDetailScreen() {
         !!user?.email &&
         !!listing?.owner_email &&
         user.email.toLowerCase() === listing.owner_email.toLowerCase();
+
+    const lat = listing?.latitude ?? null;
+    const lng = listing?.longitude ?? null;
+    const hasCoords = lat != null && lng != null;
 
     useEffect(() => {
         if (!listingId) {
@@ -66,9 +72,9 @@ export default function ListingDetailScreen() {
         };
     }, [listingId]);
 
-    const openMap = async () => {
-        if (!listing?.latitude || !listing?.longitude) return;
-        await Linking.openURL(`https://maps.google.com/maps?q=${listing.latitude},${listing.longitude}`);
+    const openGoogleMaps = async () => {
+        if (!hasCoords) return;
+        await Linking.openURL(`https://maps.google.com/maps?q=${lat},${lng}`);
     };
 
     const callBusiness = async () => {
@@ -199,6 +205,34 @@ export default function ListingDetailScreen() {
                                 </Box>
                             </Box>
 
+                            {hasCoords ? (
+                                <View className="mb-6">
+                                    <Text className="mb-3 text-sm font-semibold text-gray-700">Location</Text>
+                                    <View className="overflow-hidden rounded-xl border border-gray-200">
+                                        <MapView
+                                            style={{ height: 200 }}
+                                            region={{
+                                                latitude: lat,
+                                                longitude: lng,
+                                                latitudeDelta: 0.005,
+                                                longitudeDelta: 0.005,
+                                            }}
+                                            scrollEnabled={false}
+                                            zoomEnabled={false}
+                                        >
+                                            <Marker coordinate={{ latitude: lat, longitude: lng }} pinColor="#EAB308" />
+                                        </MapView>
+                                    </View>
+                                    <TouchableOpacity
+                                        onPress={openGoogleMaps}
+                                        className="mt-3 flex-row items-center justify-center gap-4 rounded-xl border border-yellow-200 bg-yellow-50 py-3"
+                                    >
+                                        <FontAwesome5 name="route" size={24} color="#a16207" />
+                                        <Text className="text-sm font-semibold text-yellow-700">Open in Google Maps</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ) : null}
+
                             <Box className="flex-row gap-2">
                                 <Pressable onPress={callBusiness} className="flex-1 flex-row items-center justify-center gap-1.5 rounded-xl bg-amber-400 py-3 active:bg-amber-500">
                                     <MaterialIcons name="call" size={16} color="#1f2937" />
@@ -208,12 +242,6 @@ export default function ListingDetailScreen() {
                                     <MaterialIcons name="mail" size={16} color="#6b7280" />
                                     <Text className="text-sm font-semibold text-gray-600">Email</Text>
                                 </Pressable>
-                                {listing.latitude != null && listing.longitude != null ? (
-                                    <Pressable onPress={openMap} className="flex-1 flex-row items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white py-3 active:bg-gray-50">
-                                        <MaterialIcons name="map" size={16} color="#6b7280" />
-                                        <Text className="text-sm font-semibold text-gray-600">Map</Text>
-                                    </Pressable>
-                                ) : null}
                             </Box>
 
 

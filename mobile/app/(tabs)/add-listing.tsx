@@ -1,7 +1,7 @@
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as Location from 'expo-location';
 import { Box } from '@/components/ui/box';
@@ -42,23 +42,14 @@ export default function AddListingScreen() {
     const [gpsLabel, setGpsLabel] = useState('');
     const [isGettingLocation, setIsGettingLocation] = useState(false);
 
-    const resetFormState = useCallback(() => {
+    const resetFormState = () => {
         setForm({ ...EMPTY_FORM });
         setErrors({});
         setGpsCoords(null);
         setGpsLabel('');
-    }, []);
-
-    useFocusEffect(
-        useCallback(() => {
-            return () => {
-                resetFormState();
-            };
-        }, [resetFormState]),
-    );
+    };
 
     const handleBack = () => {
-        resetFormState();
         if (router.canGoBack()) {
             router.back();
             return;
@@ -271,10 +262,20 @@ export default function AddListingScreen() {
                         </Box>
                         <Text className="mt-2 text-xs text-gray-400">Adding city and region helps customers find you in text-based searches.</Text>
                     </Box>
-                    <Button onPress={handleSubmit} isDisabled={isSubmitting} className="w-full rounded-xl bg-amber-400 data-[active=true]:bg-amber-500 data-[disabled=true]:opacity-50">
-                        {isSubmitting && <ButtonSpinner color="#1f2937" />}
-                        <ButtonText className="font-semibold text-base text-gray-900">Publish Listing</ButtonText>
-                    </Button>
+                    <Box className="flex-row gap-3">
+                        <Button
+                            variant="outline"
+                            onPress={resetFormState}
+                            isDisabled={isSubmitting}
+                            className="flex-1 rounded-xl border-2 border-gray-300 data-[active=true]:bg-gray-50 data-[disabled=true]:opacity-50"
+                        >
+                            <ButtonText className="font-semibold text-base text-gray-700">Reset</ButtonText>
+                        </Button>
+                        <Button onPress={handleSubmit} isDisabled={isSubmitting} className="flex-1 rounded-xl bg-amber-400 data-[active=true]:bg-amber-500 data-[disabled=true]:opacity-50">
+                            {isSubmitting && <ButtonSpinner color="#1f2937" />}
+                            <ButtonText className="font-semibold text-base text-gray-900">Publish Listing</ButtonText>
+                        </Button>
+                    </Box>
                 </Box>
             </ScrollView>
         </SafeAreaView>

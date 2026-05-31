@@ -21,11 +21,12 @@ import { Input, InputField } from '@/components/ui/input';
 
 export default function SearchScreen() {
     const params = useLocalSearchParams<{ q?: string }>();
+    const defaultRadiusKm = '10';
 
     const [query, setQuery] = useState(params.q ?? '');
     const [city, setCity] = useState('');
     const [region, setRegion] = useState('');
-    const [radiusKm, setRadiusKm] = useState('10');
+    const [radiusKm, setRadiusKm] = useState(defaultRadiusKm);
     const [useGps, setUseGps] = useState(false);
     const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
     const [gpsLabel, setGpsLabel] = useState('');
@@ -113,11 +114,50 @@ export default function SearchScreen() {
         runSearch(page + 1);
     };
 
+    const handleBack = () => {
+        if (router.canGoBack()) {
+            router.back();
+            return;
+        }
+        router.replace('/(tabs)');
+    };
+
+    const handleResetSearch = () => {
+        Keyboard.dismiss();
+        setQuery('');
+        setCity('');
+        setRegion('');
+        setRadiusKm(defaultRadiusKm);
+        setUseGps(false);
+        setGpsCoords(null);
+        setGpsLabel('');
+        setShowFilters(false);
+        setResults([]);
+        setIsSearching(false);
+        setIsLoadingMore(false);
+        setHasSearched(false);
+        setPage(1);
+        setHasMore(false);
+        setError(null);
+    };
+
+    const canReset = hasSearched
+        || query.length > 0
+        || city.length > 0
+        || region.length > 0
+        || useGps
+        || radiusKm !== defaultRadiusKm;
+
     return (
         <SafeAreaView className="flex-1 bg-gray-50">
             {/* Header */}
             <Box className="border-b border-gray-100 bg-white px-4 pb-3 pt-4">
-                <Text className="mb-3 text-xl font-bold text-gray-900">Search</Text>
+                <Box className="mb-3 flex-row items-center gap-3">
+                    <Pressable onPress={handleBack} className="h-10 w-10 items-center justify-center rounded-xl bg-gray-100">
+                        <MaterialIcons name="arrow-back" size={20} color="#1f2937" />
+                    </Pressable>
+                    <Text className="text-xl font-bold text-gray-900">Search</Text>
+                </Box>
 
                 <Box className="mb-2 flex-row items-center gap-2">
                     <Box className="flex-1 flex-row items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
@@ -143,6 +183,14 @@ export default function SearchScreen() {
                     >
                         <MaterialIcons name="search" size={20} color="#1f2937" />
                     </Pressable>
+                    {canReset ? (
+                        <Pressable
+                            onPress={handleResetSearch}
+                            className="items-center justify-center rounded-xl border border-gray-200 bg-white px-3 py-3 active:bg-gray-50"
+                        >
+                            <Text className="text-sm font-semibold text-gray-600">Reset</Text>
+                        </Pressable>
+                    ) : null}
                 </Box>
 
                 <Pressable onPress={() => setShowFilters(v => !v)} className="flex-row items-center gap-1 self-start">

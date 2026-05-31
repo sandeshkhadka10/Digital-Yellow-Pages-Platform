@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "DYP",
-    "slug": "mobile",
-    "version": "1.0.2",
+    "slug": "DYP",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
     "scheme": "mobile",
@@ -47,10 +47,7 @@
       "reactCompiler": true
     },
     "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "58ad662c-bff5-4117-ace3-bf7a257eb58c"
-      }
+      "router": {}
     },
     "owner": "sandesh_6638"
   }

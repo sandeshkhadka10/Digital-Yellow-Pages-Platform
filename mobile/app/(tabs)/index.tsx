@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { FlatList, Linking, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Box } from '@/components/ui/box';
 import { Text } from '@/components/ui/text';
@@ -44,7 +44,11 @@ export default function HomeScreen() {
         }
     }, []);
 
-    useEffect(() => { loadListings(1); }, [loadListings]);
+    useFocusEffect(
+        useCallback(() => {
+            loadListings(1, true);
+        }, [loadListings]),
+    );
 
     const onRefresh = useCallback(() => {
         setIsRefreshing(true);

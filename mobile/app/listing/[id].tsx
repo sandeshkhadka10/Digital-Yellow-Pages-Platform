@@ -92,7 +92,7 @@ export default function ListingDetailScreen() {
                             setIsDeleting(true);
                             await listingsApi.deleteListing(listing.id);
                             Alert.alert('Listing deleted', 'Your listing has been removed.', [
-                                { text: 'OK', onPress: () => router.replace('/(tabs)' as never) },
+                                { text: 'OK', onPress: () => router.replace('/(tabs)') },
                             ]);
                         } catch (err) {
                             const message = err instanceof ApiError ? err.message : 'Unable to delete listing.';

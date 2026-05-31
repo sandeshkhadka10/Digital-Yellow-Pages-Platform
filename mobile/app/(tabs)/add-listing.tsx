@@ -45,7 +45,7 @@ export default function AddListingScreen() {
             router.back();
             return;
         }
-        router.replace('/(tabs)' as never);
+        router.replace('/(tabs)');
     };
 
     const setField = (field: keyof ListingFormValues) => (value: string) => {
@@ -113,7 +113,7 @@ export default function AddListingScreen() {
                         });
                         setGpsCoords(null);
                         setGpsLabel('');
-                        router.replace('/(tabs)' as never);
+                        router.replace('/(tabs)');
                     },
                 }],
             );
@@ -145,10 +145,10 @@ export default function AddListingScreen() {
                         You need to be logged in to add your business to the directory.
                     </Text>
                     <Box className="mt-8 w-full gap-3">
-                        <Button onPress={() => router.push('/(auth)/login' as never)} className="w-full rounded-xl bg-amber-400 data-[active=true]:bg-amber-500">
+                        <Button onPress={() => router.push('/(auth)/login')} className="w-full rounded-xl bg-amber-400 data-[active=true]:bg-amber-500">
                             <ButtonText className="font-semibold text-base text-gray-900">Sign In</ButtonText>
                         </Button>
-                        <Button variant="outline" onPress={() => router.push('/(auth)/sign-up' as never)} className="w-full rounded-xl border-2 border-amber-400 data-[active=true]:bg-amber-50">
+                        <Button variant="outline" onPress={() => router.push('/(auth)/sign-up')} className="w-full rounded-xl border-2 border-amber-400 data-[active=true]:bg-amber-50">
                             <ButtonText className="font-semibold text-base text-amber-500">Create Account</ButtonText>
                         </Button>
                     </Box>

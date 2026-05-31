@@ -3,10 +3,12 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, NativeSyntheticEvent, Platform, StyleSheet, TextInput, TextInputKeyPressEventData } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Box } from '@/components/ui/box';
+import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { Button, ButtonText, ButtonSpinner } from '@/components/ui/button';
 import { ApiError, authApi } from '@/lib/api';
 import { useAuth } from '@/context/auth-context';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 const OTP_EXPIRY_SECONDS = 5 * 60;
 
@@ -25,6 +27,14 @@ export default function OtpVerifyScreen() {
     const OTP_LENGTH = 6;
     const otpInputRefs = useRef<(TextInput | null)[]>([]);
     const [focusedCell, setFocusedCell] = useState<number | null>(0);
+
+    const handleBack = () => {
+        if (router.canGoBack()) {
+            router.back();
+            return;
+        }
+        router.replace('/(tabs)');
+    };
 
     const startTimer = useCallback(() => {
         setSecondsLeft(OTP_EXPIRY_SECONDS);
@@ -119,7 +129,9 @@ export default function OtpVerifyScreen() {
             <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
                 <Box className="flex-1 px-6 py-8">
                     <Box className="mb-6">
-                        <Button variant="link" size="sm" onPress={() => router.back()}><ButtonText className="font-semibold text-sm text-amber-500">Back</ButtonText></Button>
+                        <Pressable onPress={handleBack} className="h-10 w-10 self-start items-center justify-center rounded-xl bg-gray-100">
+                            <MaterialIcons name="arrow-back" size={20} color="#1f2937" />
+                        </Pressable>
                     </Box>
                     <Box className="flex-1 justify-center">
                         <Box className="mb-10">

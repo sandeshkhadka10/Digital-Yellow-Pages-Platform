@@ -58,7 +58,7 @@ export default function HomeScreen() {
     }, [hasMore, isLoadingMore, page, loadListings]);
 
     const handleAddBusiness = () => {
-        router.push(isAuthenticated ? '/(tabs)/add-listing' : '/(auth)/login' as never);
+        router.push(isAuthenticated ? '/(tabs)/add-listing' : '/(auth)/login');
     };
 
     const handleSignOut = useCallback(async () => {
@@ -66,7 +66,7 @@ export default function HomeScreen() {
         setIsSigningOut(true);
         try {
             await signOut();
-            router.replace('/(auth)/login' as never);
+            router.replace('/(auth)/login');
         } finally {
             setIsSigningOut(false);
         }
@@ -102,7 +102,7 @@ export default function HomeScreen() {
                         </Pressable>
                     </Box>
                 </Box>
-                <Pressable onPress={() => router.push('/(tabs)/search' as never)}>
+                <Pressable onPress={() => router.push('/(tabs)/search')}>
                     <Box className="flex-row items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
                         <MaterialIcons name="search" size={18} color="#9ca3af" />
                         <Text className="flex-1 text-sm text-gray-400">Search businesses, services...</Text>

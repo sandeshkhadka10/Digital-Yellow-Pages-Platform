@@ -21,7 +21,7 @@ export default function SignUpScreen() {
             router.back();
             return;
         }
-        router.replace('/(tabs)' as never);
+        router.replace('/(tabs)');
     };
 
     async function handleRequestOtp() {

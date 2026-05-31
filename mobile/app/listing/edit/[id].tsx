@@ -55,7 +55,7 @@ export default function EditListingScreen() {
             router.replace({ pathname: '/listing/[id]', params: { id: listingId } });
             return;
         }
-        router.replace('/(tabs)' as never);
+        router.replace('/(tabs)');
     };
 
     const isOwner = useMemo(() => {
@@ -175,7 +175,7 @@ export default function EditListingScreen() {
                 <Box className="flex-1 items-center justify-center px-6 gap-4">
                     <Text className="text-center text-2xl font-bold text-gray-900">Sign in required</Text>
                     <Text className="text-center text-base text-gray-500">You must be logged in to edit a listing.</Text>
-                    <Button onPress={() => router.replace('/(auth)/login' as never)} className="rounded-xl bg-amber-400 data-[active=true]:bg-amber-500">
+                    <Button onPress={() => router.replace('/(auth)/login')} className="rounded-xl bg-amber-400 data-[active=true]:bg-amber-500">
                         <ButtonText className="font-semibold text-base text-gray-900">Sign In</ButtonText>
                     </Button>
                 </Box>

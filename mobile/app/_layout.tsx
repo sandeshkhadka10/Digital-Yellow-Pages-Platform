@@ -19,7 +19,7 @@ function RootNavigator() {
   useEffect(() => {
     if (isLoading) return;
     if (isAuthenticated) {
-      router.replace('/(tabs)' as never);
+      router.replace('/(tabs)');
     }
   }, [isLoading, isAuthenticated]);
 

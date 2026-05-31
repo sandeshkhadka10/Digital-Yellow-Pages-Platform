@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Linking, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { Box } from '@/components/ui/box';
+import { Text } from '@/components/ui/text';
+import { Pressable } from '@/components/ui/pressable';
+import { Spinner } from '@/components/ui/spinner';
 
 import { ApiError, BusinessListing, listingsApi } from '@/lib/api';
 import { useAuth } from '@/context/auth-context';
@@ -104,64 +108,64 @@ export default function ListingDetailScreen() {
 
     return (
         <SafeAreaView className="flex-1 bg-gray-50">
-            <View className="border-b border-gray-100 bg-white px-4 pb-3 pt-4">
-                <View className="flex-row items-center gap-3">
+            <Box className="border-b border-gray-100 bg-white px-4 pb-3 pt-4">
+                <Box className="flex-row items-center gap-3">
                     <Pressable onPress={() => router.back()} className="h-10 w-10 items-center justify-center rounded-xl bg-gray-100">
                         <MaterialIcons name="arrow-back" size={20} color="#1f2937" />
                     </Pressable>
-                    <View className="flex-1">
+                    <Box className="flex-1">
                         <Text className="text-xl font-bold text-gray-900" numberOfLines={1}>
                             Listing details
                         </Text>
                         <Text className="text-sm text-gray-500" numberOfLines={1}>
                             View the full business information
                         </Text>
-                    </View>
-                </View>
-            </View>
+                    </Box>
+                </Box>
+            </Box>
 
             {isLoading ? (
-                <View className="flex-1 items-center justify-center">
-                    <ActivityIndicator size="large" color="#f59e0b" />
-                </View>
+                <Box className="flex-1 items-center justify-center">
+                    <Spinner size="large" color="#f59e0b" />
+                </Box>
             ) : error ? (
-                <View className="flex-1 items-center justify-center px-6 gap-4">
+                <Box className="flex-1 items-center justify-center px-6 gap-4">
                     <MaterialIcons name="error-outline" size={40} color="#d1d5db" />
                     <Text className="text-center text-sm text-gray-400">{error}</Text>
                     <Pressable onPress={() => router.back()} className="rounded-xl bg-amber-400 px-6 py-3">
                         <Text className="font-semibold text-gray-900">Go back</Text>
                     </Pressable>
-                </View>
+                </Box>
             ) : listing ? (
                 <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 32 }}>
-                    <View className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
-                        <View className="mb-3 flex-row items-start justify-between gap-3">
+                    <Box className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm">
+                        <Box className="mb-3 flex-row items-start justify-between gap-3">
                             <Text className="flex-1 text-2xl font-bold text-gray-900">{listing.business_title}</Text>
                             {listing.is_active ? (
-                                <View className="rounded-full bg-green-50 px-3 py-1">
+                                <Box className="rounded-full bg-green-50 px-3 py-1">
                                     <Text className="text-xs font-semibold text-green-700">Active</Text>
-                                </View>
+                                </Box>
                             ) : null}
-                        </View>
+                        </Box>
 
                         <Text className="mb-4 text-sm leading-5 text-gray-600">{listing.service_detail}</Text>
 
-                        <View className="mb-4 gap-3 rounded-2xl bg-gray-50 p-4">
-                            <View className="flex-row items-center gap-3">
+                        <Box className="mb-4 gap-3 rounded-2xl bg-gray-50 p-4">
+                            <Box className="flex-row items-center gap-3">
                                 <MaterialIcons name="location-on" size={18} color="#f59e0b" />
                                 <Text className="flex-1 text-sm text-gray-700">{[listing.city, listing.region].filter(Boolean).join(', ') || 'Location not provided'}</Text>
-                            </View>
-                            <View className="flex-row items-center gap-3">
+                            </Box>
+                            <Box className="flex-row items-center gap-3">
                                 <MaterialIcons name="email" size={18} color="#f59e0b" />
                                 <Text className="flex-1 text-sm text-gray-700">{listing.business_email}</Text>
-                            </View>
-                            <View className="flex-row items-center gap-3">
+                            </Box>
+                            <Box className="flex-row items-center gap-3">
                                 <MaterialIcons name="phone" size={18} color="#f59e0b" />
                                 <Text className="flex-1 text-sm text-gray-700">{listing.phone_number}</Text>
-                            </View>
-                        </View>
+                            </Box>
+                        </Box>
 
-                        <View className="flex-row gap-2">
+                        <Box className="flex-row gap-2">
                             <Pressable onPress={callBusiness} className="flex-1 flex-row items-center justify-center gap-1.5 rounded-xl bg-amber-400 py-3 active:bg-amber-500">
                                 <MaterialIcons name="call" size={16} color="#1f2937" />
                                 <Text className="text-sm font-semibold text-gray-900">Call</Text>
@@ -176,10 +180,10 @@ export default function ListingDetailScreen() {
                                     <Text className="text-sm font-semibold text-gray-600">Map</Text>
                                 </Pressable>
                             ) : null}
-                        </View>
+                        </Box>
 
                         {isOwner ? (
-                            <View className="mt-3 flex-row gap-2">
+                            <Box className="mt-3 flex-row gap-2">
                                 <Pressable
                                     onPress={() => router.push({ pathname: '/listing/edit/[id]', params: { id: listing.id } })}
                                     className="flex-1 flex-row items-center justify-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 py-3 active:bg-amber-100"
@@ -197,9 +201,9 @@ export default function ListingDetailScreen() {
                                         {isDeleting ? 'Deleting...' : 'Delete'}
                                     </Text>
                                 </Pressable>
-                            </View>
+                            </Box>
                         ) : null}
-                    </View>
+                    </Box>
                 </ScrollView>
             ) : null}
         </SafeAreaView>

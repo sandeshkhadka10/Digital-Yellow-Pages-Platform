@@ -1,13 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as Location from 'expo-location';
+import { Box } from '@/components/ui/box';
+import { Text } from '@/components/ui/text';
+import { Pressable } from '@/components/ui/pressable';
+import { Spinner } from '@/components/ui/spinner';
 
 import { ApiError, BusinessListing, CreateListingPayload, listingsApi } from '@/lib/api';
-import { AppButton } from '@/components/ui/app-button';
-import { AppInput } from '@/components/ui/app-input';
+import { Button, ButtonText, ButtonSpinner } from '@/components/ui/button';
+import { Input, InputField } from '@/components/ui/input';
 import { useAuth } from '@/context/auth-context';
 
 import {
@@ -163,16 +167,18 @@ export default function EditListingScreen() {
     if (!isAuthenticated) {
         return (
             <SafeAreaView className="flex-1 bg-white">
-                <View className="px-4 pb-2 pt-2">
+                <Box className="px-4 pb-2 pt-2">
                     <Pressable onPress={handleBack} className="h-10 w-10 items-center justify-center rounded-xl bg-gray-100">
                         <MaterialIcons name="arrow-back" size={20} color="#1f2937" />
                     </Pressable>
-                </View>
-                <View className="flex-1 items-center justify-center px-6 gap-4">
+                </Box>
+                <Box className="flex-1 items-center justify-center px-6 gap-4">
                     <Text className="text-center text-2xl font-bold text-gray-900">Sign in required</Text>
                     <Text className="text-center text-base text-gray-500">You must be logged in to edit a listing.</Text>
-                    <AppButton title="Sign In" onPress={() => router.replace('/(auth)/login' as never)} />
-                </View>
+                    <Button onPress={() => router.replace('/(auth)/login' as never)} className="rounded-xl bg-amber-400 data-[active=true]:bg-amber-500">
+                        <ButtonText className="font-semibold text-base text-gray-900">Sign In</ButtonText>
+                    </Button>
+                </Box>
             </SafeAreaView>
         );
     }
@@ -180,9 +186,9 @@ export default function EditListingScreen() {
     if (isLoading) {
         return (
             <SafeAreaView className="flex-1 bg-white">
-                <View className="flex-1 items-center justify-center">
-                    <ActivityIndicator size="large" color="#f59e0b" />
-                </View>
+                <Box className="flex-1 items-center justify-center">
+                    <Spinner size="large" color="#f59e0b" />
+                </Box>
             </SafeAreaView>
         );
     }
@@ -190,10 +196,12 @@ export default function EditListingScreen() {
     if (!listing || !form) {
         return (
             <SafeAreaView className="flex-1 bg-white">
-                <View className="flex-1 items-center justify-center px-6 gap-4">
+                <Box className="flex-1 items-center justify-center px-6 gap-4">
                     <Text className="text-center text-base text-red-500">{errors.general ?? 'Listing not found.'}</Text>
-                    <AppButton title="Go Back" onPress={() => router.back()} />
-                </View>
+                    <Button onPress={() => router.back()} className="rounded-xl bg-amber-400 data-[active=true]:bg-amber-500">
+                        <ButtonText className="font-semibold text-base text-gray-900">Go Back</ButtonText>
+                    </Button>
+                </Box>
             </SafeAreaView>
         );
     }
@@ -201,11 +209,13 @@ export default function EditListingScreen() {
     if (!isOwner) {
         return (
             <SafeAreaView className="flex-1 bg-white">
-                <View className="flex-1 items-center justify-center px-6 gap-4">
+                <Box className="flex-1 items-center justify-center px-6 gap-4">
                     <Text className="text-center text-2xl font-bold text-gray-900">Access denied</Text>
                     <Text className="text-center text-base text-gray-500">Only the listing owner can edit this listing.</Text>
-                    <AppButton title="Back to listing" onPress={() => router.replace({ pathname: '/listing/[id]', params: { id: listing.id } })} />
-                </View>
+                    <Button onPress={() => router.replace({ pathname: '/listing/[id]', params: { id: listing.id } })} className="rounded-xl bg-amber-400 data-[active=true]:bg-amber-500">
+                        <ButtonText className="font-semibold text-base text-gray-900">Back to listing</ButtonText>
+                    </Button>
+                </Box>
             </SafeAreaView>
         );
     }
@@ -213,43 +223,67 @@ export default function EditListingScreen() {
     return (
         <SafeAreaView className="flex-1 bg-white">
             <ScrollView contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-                <View className="border-b border-gray-100 px-4 pb-4 pt-4">
-                    <View className="flex-row items-center gap-3">
+                <Box className="border-b border-gray-100 px-4 pb-4 pt-4">
+                    <Box className="flex-row items-center gap-3">
                         <Pressable onPress={handleBack} className="h-10 w-10 items-center justify-center rounded-xl bg-gray-100">
                             <MaterialIcons name="arrow-back" size={20} color="#1f2937" />
                         </Pressable>
-                        <View className="flex-1">
+                        <Box className="flex-1">
                             <Text className="text-xl font-bold text-gray-900">Edit Business</Text>
                             <Text className="mt-1 text-sm text-gray-500">Update your business details.</Text>
-                        </View>
-                    </View>
-                </View>
-                <View className="gap-4 px-4 pt-5">
+                        </Box>
+                    </Box>
+                </Box>
+                <Box className="gap-4 px-4 pt-5">
                     {errors.general ? (
-                        <View className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                        <Box className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
                             <Text className="text-sm text-red-600">{errors.general}</Text>
-                        </View>
+                        </Box>
                     ) : null}
-                    <AppInput label="Business Title *" value={form.business_title} onChangeText={setField('business_title')} placeholder="e.g. Kathmandu Plumbers" error={errors.business_title} maxLength={100} returnKeyType="next" />
-                    <View>
-                        <AppInput label="Service Description *" value={form.service_detail} onChangeText={setField('service_detail')} placeholder="Describe your services, specialties and offerings..." multiline numberOfLines={5} maxLength={2000} textAlignVertical="top" style={{ minHeight: 100 }} error={errors.service_detail} />
+                    <Box>
+                        <Text className="mb-1.5 text-sm font-medium text-gray-700">Business Title *</Text>
+                        <Input variant="outline" isInvalid={!!errors.business_title} className="rounded-xl border-gray-300 bg-white data-[invalid=true]:border-red-400 data-[invalid=true]:bg-red-50">
+                            <InputField value={form.business_title} onChangeText={setField('business_title')} placeholder="e.g. Kathmandu Plumbers" maxLength={100} returnKeyType="next" placeholderTextColor="#9ca3af" className="text-sm text-gray-900" />
+                        </Input>
+                        {errors.business_title ? <Text className="mt-1 text-xs text-red-500">{errors.business_title}</Text> : null}
+                    </Box>
+                    <Box>
+                        <Box>
+                            <Text className="mb-1.5 text-sm font-medium text-gray-700">Service Description *</Text>
+                            <Input variant="outline" isInvalid={!!errors.service_detail} className="rounded-xl border-gray-300 bg-white data-[invalid=true]:border-red-400 data-[invalid=true]:bg-red-50">
+                                <InputField value={form.service_detail} onChangeText={setField('service_detail')} placeholder="Describe your services, specialties and offerings..." multiline numberOfLines={5} maxLength={2000} textAlignVertical="top" style={{ minHeight: 100 }} placeholderTextColor="#9ca3af" className="text-sm text-gray-900" />
+                            </Input>
+                            {errors.service_detail ? <Text className="mt-1 text-xs text-red-500">{errors.service_detail}</Text> : null}
+                        </Box>
                         <Text className="mt-1 text-right text-xs text-gray-400">{form.service_detail.length}/2000</Text>
-                    </View>
-                    <AppInput label="Phone Number *" value={form.phone_number} onChangeText={setField('phone_number')} placeholder="+977XXXXXXXXX" keyboardType="phone-pad" error={errors.phone_number} hint="International format with country code, e.g. +977-9841000000" returnKeyType="next" />
-                    <AppInput label="Business Email *" value={form.business_email} onChangeText={setField('business_email')} placeholder="info@yourbusiness.com" keyboardType="email-address" autoCapitalize="none" error={errors.business_email} returnKeyType="next" />
-                    <View className="rounded-xl border border-amber-100 bg-amber-50 p-4">
+                    </Box>
+                    <Box>
+                        <Text className="mb-1.5 text-sm font-medium text-gray-700">Phone Number *</Text>
+                        <Input variant="outline" isInvalid={!!errors.phone_number} className="rounded-xl border-gray-300 bg-white data-[invalid=true]:border-red-400 data-[invalid=true]:bg-red-50">
+                            <InputField value={form.phone_number} onChangeText={setField('phone_number')} placeholder="+977XXXXXXXXX" keyboardType="phone-pad" returnKeyType="next" placeholderTextColor="#9ca3af" className="text-sm text-gray-900" />
+                        </Input>
+                        {errors.phone_number ? <Text className="mt-1 text-xs text-red-500">{errors.phone_number}</Text> : <Text className="mt-1 text-xs text-gray-400">International format with country code, e.g. +977-9841000000</Text>}
+                    </Box>
+                    <Box>
+                        <Text className="mb-1.5 text-sm font-medium text-gray-700">Business Email *</Text>
+                        <Input variant="outline" isInvalid={!!errors.business_email} className="rounded-xl border-gray-300 bg-white data-[invalid=true]:border-red-400 data-[invalid=true]:bg-red-50">
+                            <InputField value={form.business_email} onChangeText={setField('business_email')} placeholder="info@yourbusiness.com" keyboardType="email-address" autoCapitalize="none" returnKeyType="next" placeholderTextColor="#9ca3af" className="text-sm text-gray-900" />
+                        </Input>
+                        {errors.business_email ? <Text className="mt-1 text-xs text-red-500">{errors.business_email}</Text> : null}
+                    </Box>
+                    <Box className="rounded-xl border border-amber-100 bg-amber-50 p-4">
                         <Text className="mb-1.5 text-sm font-semibold text-gray-800">Business Location Pin *</Text>
                         <Text className="mb-3 text-xs text-gray-500">Required — used to show your business in radius searches.</Text>
                         {gpsCoords ? (
-                            <View className="flex-row items-center justify-between rounded-xl border border-green-200 bg-green-50 px-3 py-2.5">
-                                <View className="flex-row items-center gap-2">
+                            <Box className="flex-row items-center justify-between rounded-xl border border-green-200 bg-green-50 px-3 py-2.5">
+                                <Box className="flex-row items-center gap-2">
                                     <MaterialIcons name="location-on" size={16} color="#16a34a" />
                                     <Text className="text-xs text-green-700">{gpsLabel}</Text>
-                                </View>
+                                </Box>
                                 <Pressable onPress={() => { setGpsCoords(null); setGpsLabel(''); }}>
                                     <Text className="text-xs text-red-400">Remove</Text>
                                 </Pressable>
-                            </View>
+                            </Box>
                         ) : (
                             <Pressable
                                 onPress={handleGetLocation}
@@ -257,7 +291,7 @@ export default function EditListingScreen() {
                                 className="flex-row items-center justify-center gap-2 rounded-xl border border-dashed border-amber-300 bg-white py-3 active:bg-amber-100"
                             >
                                 {isGettingLocation ? (
-                                    <ActivityIndicator size="small" color="#f59e0b" />
+                                    <Spinner size="small" color="#f59e0b" />
                                 ) : (
                                     <MaterialIcons name="my-location" size={16} color="#d97706" />
                                 )}
@@ -266,19 +300,34 @@ export default function EditListingScreen() {
                                 </Text>
                             </Pressable>
                         )}
-                    </View>
-                    <View className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                    </Box>
+                    <Box className="rounded-xl border border-gray-100 bg-gray-50 p-4">
                         <Text className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Location (Optional)</Text>
-                        <View className="gap-3">
-                            <AppInput label="City" value={form.city} onChangeText={setField('city')} placeholder="e.g. Kathmandu" returnKeyType="next" />
-                            <AppInput label="Region / Province" value={form.region} onChangeText={setField('region')} placeholder="e.g. Bagmati" returnKeyType="done" />
-                        </View>
-                    </View>
-                    <View className="gap-3">
-                        <AppButton title="Cancel" variant="outline" fullWidth onPress={() => router.back()} />
-                        <AppButton title="Save Changes" fullWidth isLoading={isSubmitting} onPress={handleUpdate} />
-                    </View>
-                </View>
+                        <Box className="gap-3">
+                            <Box>
+                                <Text className="mb-1.5 text-sm font-medium text-gray-700">City</Text>
+                                <Input variant="outline" className="rounded-xl border-gray-300 bg-white">
+                                    <InputField value={form.city} onChangeText={setField('city')} placeholder="e.g. Kathmandu" returnKeyType="next" placeholderTextColor="#9ca3af" className="text-sm text-gray-900" />
+                                </Input>
+                            </Box>
+                            <Box>
+                                <Text className="mb-1.5 text-sm font-medium text-gray-700">Region / Province</Text>
+                                <Input variant="outline" className="rounded-xl border-gray-300 bg-white">
+                                    <InputField value={form.region} onChangeText={setField('region')} placeholder="e.g. Bagmati" returnKeyType="done" placeholderTextColor="#9ca3af" className="text-sm text-gray-900" />
+                                </Input>
+                            </Box>
+                        </Box>
+                    </Box>
+                    <Box className="gap-3">
+                        <Button variant="outline" onPress={() => router.back()} className="w-full rounded-xl border-2 border-amber-400 data-[active=true]:bg-amber-50">
+                            <ButtonText className="font-semibold text-base text-amber-500">Cancel</ButtonText>
+                        </Button>
+                        <Button onPress={handleUpdate} isDisabled={isSubmitting} className="w-full rounded-xl bg-amber-400 data-[active=true]:bg-amber-500 data-[disabled=true]:opacity-50">
+                            {isSubmitting && <ButtonSpinner color="#1f2937" />}
+                            <ButtonText className="font-semibold text-base text-gray-900">Save Changes</ButtonText>
+                        </Button>
+                    </Box>
+                </Box>
             </ScrollView>
         </SafeAreaView>
     );

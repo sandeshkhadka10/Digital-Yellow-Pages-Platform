@@ -1,9 +1,10 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
-import { AppButton } from '@/components/ui/app-button';
-import { OtpInput } from '@/components/ui/otp-input';
-import { Screen } from '@/components/ui/screen';
+import { KeyboardAvoidingView, NativeSyntheticEvent, Platform, StyleSheet, TextInput, TextInputKeyPressEventData } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Box } from '@/components/ui/box';
+import { Text } from '@/components/ui/text';
+import { Button, ButtonText, ButtonSpinner } from '@/components/ui/button';
 import { ApiError, authApi } from '@/lib/api';
 import { useAuth } from '@/context/auth-context';
 
@@ -19,6 +20,11 @@ export default function OtpVerifyScreen() {
     const [isResending, setIsResending] = useState(false);
     const [secondsLeft, setSecondsLeft] = useState(OTP_EXPIRY_SECONDS);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    // OTP input state
+    const OTP_LENGTH = 6;
+    const otpInputRefs = useRef<(TextInput | null)[]>([]);
+    const [focusedCell, setFocusedCell] = useState<number | null>(0);
 
     const startTimer = useCallback(() => {
         setSecondsLeft(OTP_EXPIRY_SECONDS);
@@ -63,6 +69,31 @@ export default function OtpVerifyScreen() {
 
     useEffect(() => { if (otp.length === 6) handleVerify(otp); }, [otp, handleVerify]);
 
+    const digits = otp.padEnd(OTP_LENGTH, '').split('').slice(0, OTP_LENGTH);
+
+    const handleCellChange = useCallback((text: string, index: number) => {
+        const digit = text.replace(/\D/g, '').slice(-1);
+        const newDigits = [...digits];
+        newDigits[index] = digit;
+        const newValue = newDigits.join('').replace(/ /g, '');
+        setOtp(newValue);
+        setError('');
+        if (digit && index < OTP_LENGTH - 1) otpInputRefs.current[index + 1]?.focus();
+    }, [digits]);
+
+    const handleCellKeyPress = useCallback((e: NativeSyntheticEvent<TextInputKeyPressEventData>, index: number) => {
+        if (e.nativeEvent.key === 'Backspace' && !digits[index] && index > 0) {
+            const newDigits = [...digits];
+            newDigits[index - 1] = '';
+            setOtp(newDigits.join('').replace(/ /g, ''));
+            otpInputRefs.current[index - 1]?.focus();
+        }
+    }, [digits]);
+
+    useEffect(() => {
+        setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
+    }, []);
+
     const handleResend = async () => {
         if (!email) return;
         setError('');
@@ -84,33 +115,73 @@ export default function OtpVerifyScreen() {
         : '';
 
     return (
-        <Screen>
-            <View className="mb-6">
-                <AppButton title="Back" variant="ghost" size="sm" onPress={() => router.back()} />
-            </View>
-            <View className="flex-1 justify-center">
-                <View className="mb-10">
-                    <Text className="text-3xl font-bold text-gray-900">Check your email</Text>
-                    <Text className="mt-2 text-base text-gray-500">
-                        We sent a 6-digit code to <Text className="font-semibold text-gray-700">{maskedEmail}</Text>
-                    </Text>
-                </View>
-                <View className="mb-6">
-                    <OtpInput value={otp} onChange={(val) => { setOtp(val); setError(''); }} error={error} disabled={isVerifying} autoFocus />
-                </View>
-                <View className="mb-6 items-center">
-                    {secondsLeft > 0 ? (
-                        <Text className="text-sm text-gray-500">Code expires in <Text className="font-semibold text-amber-500">{formatTime(secondsLeft)}</Text></Text>
-                    ) : (
-                        <Text className="text-sm text-red-500">Code expired. Please request a new one.</Text>
-                    )}
-                </View>
-                <AppButton title="Verify" onPress={() => handleVerify(otp)} isLoading={isVerifying} disabled={otp.length < 6} fullWidth size="lg" />
-                <View className="mt-6 flex-row items-center justify-center gap-1">
-                    <Text className="text-base text-gray-500">Didn't receive the code?</Text>
-                    <AppButton title={isResending ? 'Sending...' : 'Resend'} variant="ghost" size="sm" onPress={handleResend} disabled={isResending || isVerifying} />
-                </View>
-            </View>
-        </Screen>
+        <SafeAreaView className="flex-1 bg-white">
+            <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+                <Box className="flex-1 px-6 py-8">
+                    <Box className="mb-6">
+                        <Button variant="link" size="sm" onPress={() => router.back()}><ButtonText className="font-semibold text-sm text-amber-500">Back</ButtonText></Button>
+                    </Box>
+                    <Box className="flex-1 justify-center">
+                        <Box className="mb-10">
+                            <Text className="text-3xl font-bold text-gray-900">Check your email</Text>
+                            <Text className="mt-2 text-base text-gray-500">
+                                We sent a 6-digit code to <Text className="font-semibold text-gray-700">{maskedEmail}</Text>
+                            </Text>
+                        </Box>
+                        <Box className="mb-6">
+                            <Box className="flex-row justify-between gap-2">
+                                {Array.from({ length: OTP_LENGTH }).map((_, i) => (
+                                    <TextInput
+                                        key={i}
+                                        ref={(el) => { otpInputRefs.current[i] = el; }}
+                                        value={digits[i] === ' ' ? '' : digits[i]}
+                                        onChangeText={(text) => handleCellChange(text, i)}
+                                        onKeyPress={(e) => handleCellKeyPress(e, i)}
+                                        onFocus={() => setFocusedCell(i)}
+                                        onBlur={() => setFocusedCell(null)}
+                                        keyboardType="number-pad"
+                                        maxLength={1}
+                                        editable={!isVerifying}
+                                        selectTextOnFocus
+                                        style={[otpCellStyle.cell, { borderColor: error ? '#f87171' : focusedCell === i ? '#f59e0b' : '#d1d5db' }]}
+                                    />
+                                ))}
+                            </Box>
+                            {error ? <Text className="mt-2 text-center text-sm text-red-500">{error}</Text> : null}
+                        </Box>
+                        <Box className="mb-6 items-center">
+                            {secondsLeft > 0 ? (
+                                <Text className="text-sm text-gray-500">Code expires in <Text className="font-semibold text-amber-500">{formatTime(secondsLeft)}</Text></Text>
+                            ) : (
+                                <Text className="text-sm text-red-500">Code expired. Please request a new one.</Text>
+                            )}
+                        </Box>
+                        <Button onPress={() => handleVerify(otp)} isDisabled={isVerifying || otp.length < 6} className="w-full rounded-xl bg-amber-400 data-[active=true]:bg-amber-500 data-[disabled=true]:opacity-50" size="lg">
+                            {isVerifying && <ButtonSpinner color="#1f2937" />}
+                            <ButtonText className="font-semibold text-base text-gray-900">Verify</ButtonText>
+                        </Button>
+                        <Box className="mt-6 flex-row items-center justify-center gap-1">
+                            <Text className="text-base text-gray-500">Didn't receive the code?</Text>
+                            <Button variant="link" size="sm" onPress={handleResend} isDisabled={isResending || isVerifying}><ButtonText className="font-semibold text-sm text-amber-500">{isResending ? 'Sending...' : 'Resend'}</ButtonText></Button>
+                        </Box>
+                    </Box>
+                </Box>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 }
+
+const otpCellStyle = StyleSheet.create({
+    cell: {
+        flex: 1,
+        aspectRatio: 1,
+        maxWidth: 52,
+        borderWidth: 2,
+        borderRadius: 12,
+        textAlign: 'center',
+        fontSize: 20,
+        fontWeight: '600',
+        color: '#111827',
+        backgroundColor: '#f9fafb',
+    },
+});

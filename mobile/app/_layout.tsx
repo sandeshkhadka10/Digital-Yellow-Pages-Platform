@@ -2,9 +2,12 @@ import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { useEffect } from 'react';
-import { ActivityIndicator } from 'react-native';
+import { Spinner } from '@/components/ui/spinner';
 import '../global.css';
 import { AuthProvider, useAuth } from '@/context/auth-context';
+
+import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
+import '@/global.css';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -21,14 +24,18 @@ function RootNavigator() {
   }, [isLoading, isAuthenticated]);
 
   if (isLoading) {
-    return <ActivityIndicator size="large" color="#f59e0b" style={{ flex: 1 }} />;
+    return <Spinner size="large" color="#f59e0b" style={{ flex: 1 }} />;
   }
 
   return (
-    <Stack initialRouteName="(tabs)" screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(auth)" />
-      <Stack.Screen name="(tabs)" />
-    </Stack>
+
+    <GluestackUIProvider mode="dark">
+      <Stack initialRouteName="(tabs)" screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(tabs)" />
+      </Stack>
+    </GluestackUIProvider>
+
   );
 }
 

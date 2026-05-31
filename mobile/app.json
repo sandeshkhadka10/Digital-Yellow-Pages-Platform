@@ -1,8 +1,13 @@
 {
   "expo": {
     "name": "DYP",
+<<<<<<< HEAD
     "slug": "DYP",
     "version": "1.0.1",
+=======
+    "slug": "mobile",
+    "version": "1.0.3",
+>>>>>>> gluestack
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
     "scheme": "mobile",

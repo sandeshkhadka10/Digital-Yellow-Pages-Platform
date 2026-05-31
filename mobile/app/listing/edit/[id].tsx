@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, ScrollView } from 'react-native';
+import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -12,6 +12,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { ApiError, BusinessListing, CreateListingPayload, listingsApi } from '@/lib/api';
 import { Button, ButtonText, ButtonSpinner } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
+import { useToast, Toast, ToastTitle, ToastDescription } from '@/components/ui/toast';
 import { useAuth } from '@/context/auth-context';
 
 import {
@@ -34,6 +35,7 @@ function toFormState(listing: BusinessListing): ListingFormValues {
 
 export default function EditListingScreen() {
     const { user, isAuthenticated } = useAuth();
+    const toast = useToast();
     const params = useLocalSearchParams<{ id?: string | string[] }>();
     const listingId = Array.isArray(params.id) ? params.id[0] : params.id;
 
@@ -153,9 +155,17 @@ export default function EditListingScreen() {
                 region: values.region || undefined,
             };
             await listingsApi.updateListing(listingId, payload);
-            Alert.alert('Listing updated', 'Your changes were saved.', [
-                { text: 'View listing', onPress: () => router.replace({ pathname: '/listing/[id]', params: { id: listingId } }) },
-            ]);
+            toast.show({
+                placement: 'top',
+                duration: 3000,
+                render: ({ id }) => (
+                    <Toast nativeID={id} action="success">
+                        <ToastTitle>Listing updated</ToastTitle>
+                        <ToastDescription>Your changes were saved.</ToastDescription>
+                    </Toast>
+                ),
+            });
+            router.replace({ pathname: '/listing/[id]', params: { id: listingId } });
         } catch (err) {
             const message = err instanceof ApiError ? err.message : 'Unable to update listing.';
             setErrors({ general: message });

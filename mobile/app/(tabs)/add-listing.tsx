@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-    Alert,
     ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,6 +15,7 @@ import { listingsApi, CreateListingPayload, ApiError } from '@/lib/api';
 import { useAuth } from '@/context/auth-context';
 import { Button, ButtonText, ButtonSpinner } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
+import { useToast, Toast, ToastTitle, ToastDescription } from '@/components/ui/toast';
 
 import {
     getListingFormErrors,
@@ -26,6 +26,7 @@ import {
 
 export default function AddListingScreen() {
     const { isAuthenticated } = useAuth();
+    const toast = useToast();
     const [form, setForm] = useState<ListingFormValues>({
         business_title: '',
         service_detail: '',
@@ -97,26 +98,27 @@ export default function AddListingScreen() {
                 region: values.region || undefined,
             };
             await listingsApi.createListing(payload);
-            Alert.alert(
-                'Listing Created!',
-                'Your business has been successfully added to the directory.',
-                [{
-                    text: 'View Listings',
-                    onPress: () => {
-                        setForm({
-                            business_title: '',
-                            service_detail: '',
-                            phone_number: '',
-                            business_email: '',
-                            city: '',
-                            region: '',
-                        });
-                        setGpsCoords(null);
-                        setGpsLabel('');
-                        router.replace('/(tabs)');
-                    },
-                }],
-            );
+            toast.show({
+                placement: 'top',
+                duration: 3000,
+                render: ({ id }) => (
+                    <Toast nativeID={id} action="success">
+                        <ToastTitle>Listing Created!</ToastTitle>
+                        <ToastDescription>Your business has been successfully added to the directory.</ToastDescription>
+                    </Toast>
+                ),
+            });
+            setForm({
+                business_title: '',
+                service_detail: '',
+                phone_number: '',
+                business_email: '',
+                city: '',
+                region: '',
+            });
+            setGpsCoords(null);
+            setGpsLabel('');
+            router.replace('/(tabs)');
         } catch (err) {
             if (err instanceof ApiError) {
                 setErrors({ general: err.message });
